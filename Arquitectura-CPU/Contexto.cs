@@ -6,10 +6,15 @@ using System.Threading.Tasks;
 
 namespace Arquitectura_CPU
 {
-    class Program
+    class Contexto
     {
-        static void Main(string[] args)
+        int[] registro;
+        int pc;
+
+        public Contexto(int pc)
         {
+            registro = new int[32];
+            this.pc = pc;
         }
     }
 }

@@ -1,1 +1,7 @@
 c:\users\b32228\documents\visual studio 2013\Projects\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe.config
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe.config
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.pdb
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.exe
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
