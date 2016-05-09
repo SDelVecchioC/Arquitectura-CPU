@@ -5,3 +5,9 @@ C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arqui
 C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.pdb
 C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.exe
 C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
+C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe.config
+C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
+C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe
+C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.pdb
+C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.exe
+C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
