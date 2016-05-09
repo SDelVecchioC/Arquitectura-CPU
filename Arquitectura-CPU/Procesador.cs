@@ -14,11 +14,13 @@ namespace Arquitectura_CPU
         public int[,] memoriaPrincipal = new int[16, 4];
         public int[] blockMap = new int[4];
         public int[] registros = new int[32];
+        bool falloCache;
+        int ciclosEnFallo;
 
         // referente a sincronizacion
         public Barrier sync;
         public int id, cicloActual, maxCiclo;
-        public int pc;
+        public int pc, quantum;
         public Contexto contextoPrincipal;
         public List<Contexto> contextos;
 
@@ -30,6 +32,10 @@ namespace Arquitectura_CPU
             this.id = id;
             cicloActual = 0;
             this.maxCiclo = maxCiclo;
+            falloCache = false;
+            ciclosEnFallo = 0;
+            // TODO recibir de usuario
+            quantum = 30; 
 
             for (int i = 0; i < 4; i++)
             {
@@ -193,13 +199,49 @@ namespace Arquitectura_CPU
                 // Need to sync here
                 sync.SignalAndWait();
 
-                // Perform some more work
-                Console.WriteLine("[{0}] Ejecuto el ciclo: {1}", id, cicloActual);
+                if (!falloCache)
+                {
 
-                Random r = new Random();
-                TimeSpan t = TimeSpan.FromSeconds(r.Next(3));
-                Thread.Sleep(t);
+                    // Perform some more work
+                    Console.WriteLine("[{0}] Ejecuto el ciclo: {1}", id, cicloActual);
 
+                    //Random r = new Random();
+                    //TimeSpan t = TimeSpan.FromSeconds(r.Next(3));
+                    //Thread.Sleep(t);
+
+                    pc = contextoPrincipal.pc;
+                    Tuple<int, int> posicion = getPosicion(pc);
+                    if (blockMap[posicion.Item1 % 4] != posicion.Item1)
+                    {
+                        // Fallo de caché 
+                        for (int i = 0; i < 4; i++)
+                            cacheInstrucciones[posicion.Item1, i] = memoriaPrincipal[posicion.Item1, i];
+                        falloCache = true;
+                        ciclosEnFallo = 16;
+                    }
+                    else
+                    {
+                        /// @TODO Ejecutar mofo
+                        quantum--;
+                        if (quantum == 0)
+                        {
+                            // Hacer cambio de contexto!
+                        }
+                    }
+
+                }
+                else
+                {
+                    // si hay fallo de cache, el quantum no avanza
+                    if (ciclosEnFallo == 0)
+                    {
+                        falloCache = false;
+                    }
+                    else
+                    {
+                        ciclosEnFallo--;
+                    }
+                }
                 cicloActual++;
             }
         }

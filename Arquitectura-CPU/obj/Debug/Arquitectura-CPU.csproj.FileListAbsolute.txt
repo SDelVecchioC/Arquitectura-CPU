@@ -23,3 +23,4 @@ C:\Users\b30640\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura
 C:\Users\b30640\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
 C:\Users\b30640\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.exe
 C:\Users\b30640\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
+C:\Users\sdelv\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe.config
