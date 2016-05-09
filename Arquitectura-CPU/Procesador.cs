@@ -20,7 +20,7 @@ namespace Arquitectura_CPU
         public int id, cicloActual, maxCiclo;
         public int pc;
         public Contexto contextoPrincipal;
-        public Contexto[] contextos;
+        public List<Contexto> contextos;
 
 
 
@@ -44,7 +44,12 @@ namespace Arquitectura_CPU
                 for (int j = 0; j < 4; j++)
                     memoriaPrincipal[i, j] = 0;
 
+            contextos = new List<Contexto>();
             manejoArchivo(programas);
+            if (contextos.Count > 0)
+            {
+                contextoPrincipal = contextos.ElementAt(0);
+            }
 
         }
 
@@ -148,6 +153,7 @@ namespace Arquitectura_CPU
                 // los convierto a int
                 int[] numeros = Array.ConvertAll(n, int.Parse);
 
+                Contexto contexto = new Contexto(direccionRam);
                 // cargar en la RAM
                 foreach(int numero in numeros)
                 {
@@ -155,6 +161,7 @@ namespace Arquitectura_CPU
                     memoriaPrincipal[direccion.Item1, direccion.Item2] = numero;
                     direccionRam++;
                 }
+                contextos.Add(contexto);
 
                 // prueba de impresion
                 /*for (int i = 0; i < 16; i++)

@@ -14,6 +14,10 @@ namespace Arquitectura_CPU
         public Contexto(int pc)
         {
             registro = new int[32];
+            for (int i = 0; i < 32; i++)
+            {
+                registro[i] = 0;
+            }
             this.pc = pc;
         }
     }
