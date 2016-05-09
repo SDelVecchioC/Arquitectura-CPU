@@ -155,14 +155,17 @@ namespace Arquitectura_CPU
                     memoriaPrincipal[direccion.Item1, direccion.Item2] = numero;
                     direccionRam++;
                 }
-                for (int i = 0; i < 16; i++)
+
+                // prueba de impresion
+                /*for (int i = 0; i < 16; i++)
                 {
                     for (int j = 0; j < 4; j++)
                     {
                         Console.Write(string.Format("{0} ", memoriaPrincipal[i, j]));
                     }
-                    Console.Write(Environment.NewLine + Environment.NewLine + Environment.NewLine);
+                    Console.Write(Environment.NewLine + Environment.NewLine);
                 }
+                Console.Write(Environment.NewLine + Environment.NewLine);*/
                 //Console.WriteLine(numeros.Length);
             }
   
