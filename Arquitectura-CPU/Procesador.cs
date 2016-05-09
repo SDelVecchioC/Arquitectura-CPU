@@ -24,7 +24,7 @@ namespace Arquitectura_CPU
 
 
 
-        public Procesador(int id, int maxCiclo, Barrier s)
+        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas)
         {
             this.sync = s;
             this.id = id;
@@ -43,6 +43,8 @@ namespace Arquitectura_CPU
             for (int i = 0; i < 16; i++)
                 for (int j = 0; j < 4; j++)
                     memoriaPrincipal[i, j] = 0;
+
+            manejoArchivo(programas);
 
         }
 
@@ -131,41 +133,46 @@ namespace Arquitectura_CPU
             }
         }
 
-        public void manejoArchivo(string nombre)
+        public void manejoArchivo(List<string> programas)
         {
-            int contador = 0;
-            string line;
+            int direccionRam = 128;
 
-
-            // Read the file and display it line by line.
-            System.IO.StreamReader file =
-            new System.IO.StreamReader(nombre);
-            while ((line = file.ReadLine()) != null)
+            foreach(var p in programas)
             {
-                //Console.WriteLine (line);
-                int ultimaPos = 0;
-                int largoSubStr = 0;
-                int[] instEntrada = new int[4];
-                int numParam = 0;
-                for (int i = 0; i < line.Length; i++)
+                // le quito los cambios de linea y que queden separados por espacios
+                var programa = p.Replace(System.Environment.NewLine, "");
+
+                // los separo por coma
+                string[] n = programa.Split(' ');
+
+                // los convierto a int
+                int[] numeros = Array.ConvertAll(n, int.Parse);
+
+                // cargar en la RAM
+                foreach(int numero in numeros)
                 {
-                    if (line[i] == ' ')
-                    {
-                        //extrae los números de manera individual 
-                        instEntrada[numParam] = Convert.ToInt32(line.Substring(ultimaPos, largoSubStr));
-                        numParam++;
-                        ultimaPos = i++;
-                        largoSubStr = 0;
-
-                    }
-                    else
-                        largoSubStr++;
+                    var direccion = getPosicion(direccionRam);
+                    memoriaPrincipal[direccion.Item1, direccion.Item2] = numero;
+                    direccionRam++;
                 }
-                manejoInstrucciones(instEntrada[0], instEntrada[1], instEntrada[2], instEntrada[4]
-                );
-                contador++;
+                for (int i = 0; i < 16; i++)
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        Console.Write(string.Format("{0} ", memoriaPrincipal[i, j]));
+                    }
+                    Console.Write(Environment.NewLine + Environment.NewLine + Environment.NewLine);
+                }
+                //Console.WriteLine(numeros.Length);
             }
+  
+        }
 
+        private Tuple<int, int> getPosicion(int direccion)
+        {
+            int bloque = (int)direccion / 16;
+            int posicion = direccion % 4;
+            return new Tuple<int, int>(bloque, posicion);
         }
 
 
