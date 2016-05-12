@@ -10,8 +10,8 @@ namespace Arquitectura_CPU
     class Procesador
     {
         // estructuras de datos del procesador
-        public int[][] cacheInstrucciones;
-        public int[][] memoriaPrincipal;
+        public int[][][] cacheInstrucciones;
+        public int[][][] memoriaPrincipal;
         public int[] blockMap = new int[4];
         bool falloCache;
         int ciclosEnFallo;
@@ -35,23 +35,33 @@ namespace Arquitectura_CPU
             // TODO recibir de usuario
             quantum = 30;
 
-            cacheInstrucciones = new int[4][];
+            cacheInstrucciones = new int[4][][];
             for (int i = 0; i < 4; i++)
             {
                 blockMap[i] = -1;
-                cacheInstrucciones[i] = new int[4];
+                cacheInstrucciones[i] = new int[4][];
                 for (int j = 0; j < 4; j++)
                 {
-                    cacheInstrucciones[i][j] = 0;
+                    cacheInstrucciones[i][j] = new int[4];
+                    for(int k = 0; k < 4; k++)
+                    {
+                        cacheInstrucciones[i][j][k] = 0;
+                    }
                 }
             }
 
-            memoriaPrincipal = new int[16][];
+            memoriaPrincipal = new int[16][][];
             for (int i = 0; i < 16; i++)
             {
-                memoriaPrincipal[i] = new int[4];
+                memoriaPrincipal[i] = new int[4][];
                 for (int j = 0; j < 4; j++)
-                    memoriaPrincipal[i][j] = 0;
+                {
+                    memoriaPrincipal[i][j] = new int[4];
+                    for(int k = 0; k < 4; k++)
+                    {
+                        memoriaPrincipal[i][j][k] = 0;
+                    }
+                }  
             }
 
             contextos = new List<Contexto>();
@@ -171,32 +181,34 @@ namespace Arquitectura_CPU
 
             foreach(var p in programas)
             {
-                // le quito los cambios de linea y que queden separados por espacios
-                var programa = p.Replace(System.Environment.NewLine, " ").Trim();
+                // para cada programa
 
-                // los separo por coma
-                string[] n = programa.Split(' ');
-
-                // los convierto a int
-                int[] numeros = Array.ConvertAll(n, int.Parse);
+                // cada linea es una instruccion de 4 numeros
+                string[] instrucciones = p.Split('\n');
 
                 Contexto contexto = new Contexto(direccionRam);
-                // cargar en la RAM
-                foreach(int numero in numeros)
-                {
-                    var direccion = getPosicion(direccionRam);
-                    memoriaPrincipal[direccion.Item1][direccion.Item2] = numero;
-                    direccionRam++;
-                }
                 contextos.Add(contexto);
+
+                foreach(var i in instrucciones)
+                {
+                    // para cada instruccion separo los 4 numeros
+                    string[] instruccion = i.Split(' ');
+                    int[] numeros = Array.ConvertAll(instruccion, int.Parse);
+
+                    for(int m = 0; m < 4; m++)
+                    {
+                        var direccion = getPosicion(direccionRam);
+                        memoriaPrincipal[direccion.Item1][direccion.Item2][m] = numeros[m];  
+                    }
+                    direccionRam += 4; 
+                }
             }
-  
         }
 
         private Tuple<int, int> getPosicion(int direccion)
         {
             int bloque = (int)direccion / 16;
-            int posicion = direccion % 4;
+            int posicion = (direccion % 16) / 4;
             return new Tuple<int, int>(bloque, posicion);
         }
 
@@ -212,13 +224,13 @@ namespace Arquitectura_CPU
                 {
 
                     // Perform some more work
-                    
-
+ 
                     int pc = contextos.ElementAt(0).pc;
                     Tuple<int, int> posicion = getPosicion(pc);
                     if (blockMap[posicion.Item1 % 4] != posicion.Item1)
                     {
                         // Fallo de caché 
+                        /// @TODO arreglar para la nueve dimension
                         for (int i = 0; i < 4; i++)
                             cacheInstrucciones[posicion.Item1 % 4][i] = memoriaPrincipal[posicion.Item1][i];
                         blockMap[posicion.Item1 % 4] = posicion.Item1;
