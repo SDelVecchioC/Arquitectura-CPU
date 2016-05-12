@@ -10,17 +10,16 @@ namespace Arquitectura_CPU
     class Procesador
     {
         // estructuras de datos del procesador
-        public int[,] cacheInstrucciones = new int[4, 4];
-        public int[,] memoriaPrincipal = new int[16, 4];
+        public int[][] cacheInstrucciones;
+        public int[][] memoriaPrincipal;
         public int[] blockMap = new int[4];
-        public int[] registros = new int[32];
         bool falloCache;
         int ciclosEnFallo;
 
         // referente a sincronizacion
         public Barrier sync;
         public int id, cicloActual, maxCiclo;
-        public int pc, quantum;
+        public int quantum;
         public List<Contexto> contextos;
 
 
@@ -34,20 +33,26 @@ namespace Arquitectura_CPU
             falloCache = false;
             ciclosEnFallo = 0;
             // TODO recibir de usuario
-            quantum = 30; 
+            quantum = 30;
 
+            cacheInstrucciones = new int[4][];
             for (int i = 0; i < 4; i++)
             {
                 blockMap[i] = -1;
+                cacheInstrucciones[i] = new int[4];
                 for (int j = 0; j < 4; j++)
                 {
-                    cacheInstrucciones[i, j] = 0;
+                    cacheInstrucciones[i][j] = 0;
                 }
             }
 
+            memoriaPrincipal = new int[16][];
             for (int i = 0; i < 16; i++)
+            {
+                memoriaPrincipal[i] = new int[4];
                 for (int j = 0; j < 4; j++)
-                    memoriaPrincipal[i, j] = 0;
+                    memoriaPrincipal[i][j] = 0;
+            }
 
             contextos = new List<Contexto>();
             manejoArchivo(programas);
@@ -56,20 +61,24 @@ namespace Arquitectura_CPU
 
         public static void ShiftLeft<T>(List<T> lst, int shifts)
         {
-            for (int i = shifts; i < lst.Count; i++)
+            for (int i = 0; i < shifts; i++)
             {
-                lst[i - shifts] = lst[i];
-            }
-
-            for (int i = lst.Count - shifts; i < lst.Count; i++)
-            {
-                lst[i] = default(T);
+                lst.Add(lst.ElementAt(0));
+                lst.RemoveAt(0);
             }
         }
 
-        public void manejoInstrucciones(int codigoInstruccion, int regFuente1, int regFuente2, int regDest) //el regDest puede ser un inmediato
+        public bool manejoInstrucciones(int[] instruccion) //el regDest puede ser un inmediato
         {
+            bool res = false;
+            int codigoInstruccion = instruccion[0], 
+                regFuente1 = instruccion[1], 
+                regFuente2 = instruccion[2], 
+                regDest = instruccion[3];
 
+            Contexto contPrincipal = contextos.ElementAt(0);
+
+            contPrincipal.pc += 4;
             switch (codigoInstruccion)
             {
                 case 8:
@@ -77,44 +86,45 @@ namespace Arquitectura_CPU
                     DADDI RX, RY, #n : Rx <-- (Ry) + n
                     CodOp: 8 RF1: Y RF2 O RD: x RD O IMM:n
                     */
-                    registros[regFuente1] = registros[regFuente2] + regDest;
+                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] + regDest;  
                     break;
                 case 32:
                     /*
                         DADD RX, RY, #n : Rx <-- (Ry) + (Rz)
                         CodOp: 32 RF1: Y RF2 O RD: x RD o IMM:Rz
                         */
-                    registros[regFuente1] = registros[regFuente2] + registros[regDest];
+                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] + contPrincipal.registro[regDest];
                     break;
                 case 34:
                     /*
                     DSUB RX, RY, #n : Rx <-- (Ry) - (Rz)
                     CodOp: 34 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    registros[regFuente1] = registros[regFuente2] - registros[regDest];
+                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] - contPrincipal.registro[regDest];
                     break;
                 case 12:
                     /*
                     DMUL RX, RY, #n : Rx <-- (Ry) * (Rz)
                     CodOp: 12 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    registros[regFuente1] = registros[regFuente2] * registros[regDest];
+                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] * contPrincipal.registro[regDest];
                     break;
                 case 14:
                     /*
                     DDIV RX, RY, #n : Rx <-- (Ry) / (Rz)
                     CodOp: 14 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    registros[regFuente1] = registros[regFuente2] / registros[regDest];
+                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] / contPrincipal.registro[regDest];
                     break;
                 case 4:
                     /*
                     BEQZ RX, ETIQ : Si RX = 0 salta 
                     CodOp: 4 RF1: Y RF2 O RD: 0 RD o IMM:n
                     */
-                    if (regFuente1 == 0)
+                    if (contPrincipal.registro[regFuente1] == 0)
                     {
-                        //salta a la etiqueta indicada por regFuente2
+                        contPrincipal.pc += (regDest << 2);
+                        //salta a la etiqueta indicada por regDest
                     }
                     break;
                 case 5:
@@ -122,9 +132,10 @@ namespace Arquitectura_CPU
                      BEQNZ RX, ETIQ : Si RX != 0 salta 
                      CodOp: 5 RF1: x RF2 O RD: 0 RD o IMM:n
                      */
-                    if (regFuente1 != 0)
+                    if (contPrincipal.registro[regFuente1] != 0)
                     {
-                        //salta a la etiqueta indicada por regFuente2
+                        //salta a la etiqueta indicada por regDest
+                        contPrincipal.pc += (regDest << 2);
                     }
                     break;
                 case 3:
@@ -132,24 +143,26 @@ namespace Arquitectura_CPU
                     JAL n, R31=PC, PC = PC+n
                     CodOp: 3 RF1: 0 RF2 O RD: 0 RD o IMM:n
                     */
-                    registros[30] = pc;
-                    pc += regDest;
+                    contPrincipal.registro[31] = contPrincipal.pc;
+                    contPrincipal.pc += regDest;
                     break;
                 case 2:
                     /*
                     JR RX: PC=RX
                     CodOp: 2 RF1: X RF2 O RD: 0 RD o IMM:0
                     */
-                    pc = registros[regFuente1];
+                    contPrincipal.pc = contPrincipal.registro[regFuente1];
                     break;
                 case 63:
                     /*
                      fin
                      CodOp: 63 RF1: 0 RF2 O RD: 0 RD o IMM:0
                      */
+                    res = true;
                     break;
 
             }
+            return res;
         }
 
         public void manejoArchivo(List<string> programas)
@@ -159,7 +172,7 @@ namespace Arquitectura_CPU
             foreach(var p in programas)
             {
                 // le quito los cambios de linea y que queden separados por espacios
-                var programa = p.Replace(System.Environment.NewLine, "");
+                var programa = p.Replace(System.Environment.NewLine, " ").Trim();
 
                 // los separo por coma
                 string[] n = programa.Split(' ');
@@ -172,22 +185,10 @@ namespace Arquitectura_CPU
                 foreach(int numero in numeros)
                 {
                     var direccion = getPosicion(direccionRam);
-                    memoriaPrincipal[direccion.Item1, direccion.Item2] = numero;
+                    memoriaPrincipal[direccion.Item1][direccion.Item2] = numero;
                     direccionRam++;
                 }
                 contextos.Add(contexto);
-
-                // prueba de impresion
-                /*for (int i = 0; i < 16; i++)
-                {
-                    for (int j = 0; j < 4; j++)
-                    {
-                        Console.Write(string.Format("{0} ", memoriaPrincipal[i, j]));
-                    }
-                    Console.Write(Environment.NewLine + Environment.NewLine);
-                }
-                Console.Write(Environment.NewLine + Environment.NewLine);*/
-                //Console.WriteLine(numeros.Length);
             }
   
         }
@@ -202,7 +203,7 @@ namespace Arquitectura_CPU
 
         public void Iniciar()
         {
-            while (cicloActual < maxCiclo)
+            while (contextos.Count > 0)
             {
                 // Need to sync here
                 sync.SignalAndWait();
@@ -211,31 +212,43 @@ namespace Arquitectura_CPU
                 {
 
                     // Perform some more work
-                    Console.WriteLine("[{0}] Ejecuto el ciclo: {1}", id, cicloActual);
+                    
 
-                    //Random r = new Random();
-                    //TimeSpan t = TimeSpan.FromSeconds(r.Next(3));
-                    //Thread.Sleep(t);
-
-                    pc = contextos.ElementAt(0).pc;
+                    int pc = contextos.ElementAt(0).pc;
                     Tuple<int, int> posicion = getPosicion(pc);
                     if (blockMap[posicion.Item1 % 4] != posicion.Item1)
                     {
                         // Fallo de caché 
                         for (int i = 0; i < 4; i++)
-                            cacheInstrucciones[posicion.Item1, i] = memoriaPrincipal[posicion.Item1, i];
+                            cacheInstrucciones[posicion.Item1 % 4][i] = memoriaPrincipal[posicion.Item1][i];
+                        blockMap[posicion.Item1 % 4] = posicion.Item1;
+
                         falloCache = true;
                         ciclosEnFallo = 16;
+                        Console.WriteLine("[{0}] Fallo de cache, ciclo: {1}", id, cicloActual);
                     }
                     else
                     {
                         /// @TODO Ejecutar mofo
-                        quantum--;
-                        if (quantum == 0)
+                        Console.WriteLine("[{0}] {1} {2} {3} {4}, ciclo: {5}", id, cacheInstrucciones[posicion.Item1 % 4][0], cacheInstrucciones[posicion.Item1 % 4][1], cacheInstrucciones[posicion.Item1 % 4][2], cacheInstrucciones[posicion.Item1 % 4][3], cicloActual);
+                        bool res = manejoInstrucciones(cacheInstrucciones[posicion.Item1 % 4]);
+                        if(res)
                         {
-                            // Hacer cambio de contexto!
-                            ShiftLeft(contextos, 1);
+                            Console.WriteLine("[{0}] Murio hile, ciclo: {1}", id, cicloActual);
+                            contextos.RemoveAt(0);// @TODO controlar out of bounds
                         }
+                        else
+                        {
+                            quantum--;
+                            if (quantum == 0)
+                            {
+                                // Hacer cambio de contexto!
+                                ShiftLeft(contextos, 1);
+                                Console.WriteLine("[{0}] Cambio contexto, ciclo: {1}", id, cicloActual);
+                                quantum = 30;
+                            }
+                        }
+                        
                     }
 
                 }

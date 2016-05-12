@@ -41,7 +41,7 @@ namespace Arquitectura_CPU
 
         static void Main(string[] args)
         {
-            int cantProcesadores = 3;
+            int cantProcesadores = 1;
 
 
             var sync = new Barrier(participantCount: cantProcesadores);
@@ -58,7 +58,7 @@ namespace Arquitectura_CPU
 
             for(int i = 0; i < cantProcesadores; i++)
             {
-                var cpu = new Procesador(i, 5, sync, programasPorCpu.ElementAt(i));
+                var cpu = new Procesador(i, 2000, sync, programasPorCpu.ElementAt(i));
                 var hiloCpu = new Thread(cpu.Iniciar);
                 hiloCpu.Start();
             }

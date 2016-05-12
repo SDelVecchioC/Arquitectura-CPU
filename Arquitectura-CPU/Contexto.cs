@@ -8,7 +8,7 @@ namespace Arquitectura_CPU
 {
     class Contexto
     {
-        int[] registro;
+        public int[] registro;
         public int pc;
 
         public Contexto(int pc)
