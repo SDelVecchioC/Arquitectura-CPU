@@ -31,3 +31,4 @@ C:\Users\b30640\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquite
 C:\Users\b30640\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
 C:\Users\b30640\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.exe
 C:\Users\b30640\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
+C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\1.txt
