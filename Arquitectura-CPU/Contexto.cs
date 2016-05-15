@@ -8,10 +8,11 @@ namespace Arquitectura_CPU
 {
     class Contexto
     {
+        public int id;
         public int[] registro;
         public int pc;
 
-        public Contexto(int pc)
+        public Contexto(int pc, int id)
         {
             registro = new int[32];
             for (int i = 0; i < 32; i++)
@@ -19,6 +20,7 @@ namespace Arquitectura_CPU
                 registro[i] = 0;
             }
             this.pc = pc;
+            this.id = id;
         }
     }
 }

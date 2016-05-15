@@ -41,11 +41,15 @@ namespace Arquitectura_CPU
 
         static void Main(string[] args)
         {
-            int cantProcesadores = 1;
+            int cantProcesadores = 3;
 
 
             var sync = new Barrier(participantCount: cantProcesadores);
             List<string> programas = new List<string>();
+
+            List<Procesador> procesadores = new List<Procesador>();
+            List<Thread> hilos = new List<Thread>();
+
 
             // leer los archivos y repartirlos
             foreach (string file in Directory.EnumerateFiles("./programas", "*.txt"))
@@ -58,13 +62,48 @@ namespace Arquitectura_CPU
 
             for(int i = 0; i < cantProcesadores; i++)
             {
-                var cpu = new Procesador(i, 2000, sync, programasPorCpu.ElementAt(i));
+                var cpu = new Procesador(i+1, 2000, sync, programasPorCpu.ElementAt(i));
                 var hiloCpu = new Thread(cpu.Iniciar);
+
+                procesadores.Add(cpu);
+                hilos.Add(hiloCpu);
+
                 hiloCpu.Start();
+          
+            }
+
+            for (int i = 0; i < cantProcesadores; i++)
+            {
+                hilos.ElementAt(i).Join();
+            }
+
+            for (int i = 0; i < cantProcesadores; i++)
+            {
+                imprimirResultados(procesadores.ElementAt(i));
             }
 
 
-            Console.ReadKey();
+            Console.ReadLine();
+        }
+
+        private static void imprimirResultados(Procesador p)
+        {
+            Console.WriteLine("Resultados del procesador {0}:", p.id);
+            foreach (var contexto in p.contextosFinalizados)
+            {
+                Console.WriteLine("Resultados del hilillo {0}:", contexto.id);
+                for (int i = 0; i < contexto.registro.Length; i++)
+                {
+
+                    Console.Write("R{0}: {1} ", i.ToString("D2"), contexto.registro[i].ToString("D5"));
+                    if (i % 4 == 3)
+                    {
+                        Console.WriteLine("");
+                    }
+                }
+                Console.WriteLine("");
+            }
+
         }
 
     }

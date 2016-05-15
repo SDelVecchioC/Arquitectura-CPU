@@ -33,3 +33,8 @@ C:\Users\b30640\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquite
 C:\Users\b30640\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
 C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\1.txt
 C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\1.txt
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\2.txt
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.txt
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\4.txt
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\5.txt
+C:\Users\Emmanuel\Source\Repos\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\6.txt

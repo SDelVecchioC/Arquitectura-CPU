@@ -20,7 +20,7 @@ namespace Arquitectura_CPU
         public Barrier sync;
         public int id, cicloActual, maxCiclo;
         public int quantum;
-        public List<Contexto> contextos;
+        public List<Contexto> contextos, contextosFinalizados;
 
 
 
@@ -28,7 +28,7 @@ namespace Arquitectura_CPU
         {
             this.sync = s;
             this.id = id;
-            cicloActual = 0;
+            cicloActual = 1;
             this.maxCiclo = maxCiclo;
             falloCache = false;
             ciclosEnFallo = 0;
@@ -65,6 +65,7 @@ namespace Arquitectura_CPU
             }
 
             contextos = new List<Contexto>();
+            contextosFinalizados = new List<Contexto>();
             manejoArchivo(programas);
 
         }
@@ -263,7 +264,7 @@ namespace Arquitectura_CPU
         public void manejoArchivo(List<string> programas)
         {
             int direccionRam = 128;
-
+            int idPrograma = 1;
             foreach (var p in programas)
             {
                 // para cada programa
@@ -271,7 +272,7 @@ namespace Arquitectura_CPU
                 // cada linea es una instruccion de 4 numeros
                 string[] instrucciones = p.Split('\n');
 
-                Contexto contexto = new Contexto(direccionRam);
+                Contexto contexto = new Contexto(direccionRam, idPrograma);
                 contextos.Add(contexto);
 
                 foreach (var i in instrucciones)
@@ -288,6 +289,7 @@ namespace Arquitectura_CPU
                     }
                     direccionRam += 4;
                 }
+                idPrograma++;
             }
         }
 
@@ -306,17 +308,19 @@ namespace Arquitectura_CPU
                 // Need to sync here
                 sync.SignalAndWait();
 
+                if(quantum == 30)
+                {
+                    Console.WriteLine("[Procesador #{0}] Hilillo #{1}, ciclo: {1}", id, contextos.ElementAt(0).id, cicloActual); 
+                }
+
                 if (!falloCache)
                 {
-
-                    // Perform some more work
 
                     int pc = contextos.ElementAt(0).pc;
                     Tuple<int, int> posicion = getPosicion(pc);
                     if (blockMap[posicion.Item1 % 4] != posicion.Item1)
                     {
                         // Fallo de caché 
-                        /// @TODO arreglar para la nueve dimension
                         for (int j = 0; j < 4; j++)
                         {
                             for (int i = 0; i < 4; i++)
@@ -330,16 +334,17 @@ namespace Arquitectura_CPU
 
                         falloCache = true;
                         ciclosEnFallo = 16;
-                        Console.WriteLine("[{0}] Fallo de cache, ciclo: {1}", id, cicloActual);
+                        //Console.WriteLine("[{0}] Fallo de cache, ciclo: {1}", id, cicloActual);
                     }
                     else
                     {
                         /// @TODO Ejecutar mofo
-                        Console.WriteLine("[{0}] ciclo: {1}, {2}", id, cicloActual, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]));
+                        //Console.WriteLine("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]));
                         bool res = manejoInstrucciones(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]);
                         if(res)
                         {
-                            Console.WriteLine("[{0}] Murio hile, ciclo: {1}", id, cicloActual);
+                            //Console.WriteLine("[{0}] Murio hilo {1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual);
+                            contextosFinalizados.Add(contextos.ElementAt(0));
                             contextos.RemoveAt(0);// @TODO contmanejorolar out of bounds
                         }
                         else
@@ -348,8 +353,8 @@ namespace Arquitectura_CPU
                             if (quantum == 0)
                             {
                                 // Hacer cambio de contexto!
+                                //Console.WriteLine("[{0}] Cambio contexto, ciclo: {1}", id, cicloActual); 
                                 ShiftLeft(contextos, 1);
-                                Console.WriteLine("[{0}] Cambio contexto, ciclo: {1}", id, cicloActual);
                                 quantum = 30;
                             }
                         }
@@ -371,6 +376,9 @@ namespace Arquitectura_CPU
                 }
                 cicloActual++;
             }
+
+            sync.RemoveParticipant();
         }
+
     }
 }
