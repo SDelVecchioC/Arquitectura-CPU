@@ -78,7 +78,92 @@ namespace Arquitectura_CPU
             }
         }
 
-        public bool manejoInstrucciones(int[] instruccion) //el regDest puede ser un inmediato
+        public string getStringInstruccion(int[] instruccion)
+        {
+            int codigoInstruccion = instruccion[0],
+                regFuente1 = instruccion[1],
+                regFuente2 = instruccion[2],
+                regDest = instruccion[3];
+            string res = "";
+            Contexto contPrincipal = contextos.ElementAt(0);
+
+            switch (codigoInstruccion)
+            {
+                case 8:
+                    /*
+                    DADDI RX, RY, #n : Rx <-- (Ry) + n
+                    CodOp: 8 RF1: Y RF2 O RD: x RD O IMM:n
+                    */
+                    res = String.Format("DADDI R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], regDest);
+                    break;
+                case 32:
+                    /*
+                    DADD RX, RY, #n : Rx <-- (Ry) + (Rz)
+                    CodOp: 32 RF1: Y RF2 O RD: x RD o IMM:Rz
+                    */
+                    res = String.Format("DADD R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
+                    break;
+                case 34:
+                    /*
+                    DSUB RX, RY, #n : Rx <-- (Ry) - (Rz)
+                    CodOp: 34 RF1: Y RF2 O RD: z RD o IMM:X
+                    */
+                    res = String.Format("DSUB R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
+                    break;
+                case 12:
+                    /*
+                    DMUL RX, RY, #n : Rx <-- (Ry) * (Rz)
+                    CodOp: 12 RF1: Y RF2 O RD: z RD o IMM:X
+                    */
+                    res = String.Format("DMUL R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
+                    break;
+                case 14:
+                    /*
+                    DDIV RX, RY, #n : Rx <-- (Ry) / (Rz)
+                    CodOp: 14 RF1: Y RF2 O RD: z RD o IMM:X
+                    */
+                    res = String.Format("DDIV R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
+                    break;
+                case 4:
+                    /*
+                    BEQZ RX, ETIQ : Si RX = 0 salta 
+                    CodOp: 4 RF1: Y RF2 O RD: 0 RD o IMM:n
+                    */
+                    res = String.Format("BEQZ R{0},{1}", contPrincipal.registro[regFuente1], regDest);
+                    break;
+                case 5:
+                    /*
+                     BEQNZ RX, ETIQ : Si RX != 0 salta 
+                     CodOp: 5 RF1: x RF2 O RD: 0 RD o IMM:n
+                     */
+                    res = String.Format("BEQNZ R{0},{1}", contPrincipal.registro[regFuente1], regDest);
+                    break;
+                case 3:
+                    /*
+                    JAL n, R31=PC, PC = PC+n
+                    CodOp: 3 RF1: 0 RF2 O RD: 0 RD o IMM:n
+                    */
+                    res = String.Format("JAL {0}", regDest);
+                    break;
+                case 2:
+                    /*
+                    JR RX: PC=RX
+                    CodOp: 2 RF1: X RF2 O RD: 0 RD o IMM:0
+                    */
+                    res = String.Format("JR RX{0}", contPrincipal.registro[regFuente1]);
+                    break;
+                case 63:
+                    /*
+                     fin
+                     CodOp: 63 RF1: 0 RF2 O RD: 0 RD o IMM:0
+                     */
+                    res = String.Format("FIN");
+                    break;
+            }
+            return res;
+        }
+
+        public bool manejoInstrucciones(int[] instruccion)
         {
             bool res = false;
             int codigoInstruccion = instruccion[0],
@@ -96,47 +181,41 @@ namespace Arquitectura_CPU
                     DADDI RX, RY, #n : Rx <-- (Ry) + n
                     CodOp: 8 RF1: Y RF2 O RD: x RD O IMM:n
                     */
-                    Console.WriteLine("DADDI R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2],regDest);
-                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] + regDest;
+                    contPrincipal.registro[regFuente2] = contPrincipal.registro[regFuente1] + regDest;
                     break;
                 case 32:
                     /*
-                        DADD RX, RY, #n : Rx <-- (Ry) + (Rz)
-                        CodOp: 32 RF1: Y RF2 O RD: x RD o IMM:Rz
-                        */
-                    Console.WriteLine("DADD R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
-                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] + contPrincipal.registro[regDest];
+                    DADD RX, RY, #n : Rx <-- (Ry) + (Rz)
+                    CodOp: 32 RF1: Y RF2 O RD: x RD o IMM:Rz
+                    */
+                    contPrincipal.registro[regDest] = contPrincipal.registro[regFuente1] + contPrincipal.registro[regFuente2];
                     break;
                 case 34:
                     /*
                     DSUB RX, RY, #n : Rx <-- (Ry) - (Rz)
                     CodOp: 34 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    Console.WriteLine("DSUB R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
-                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] - contPrincipal.registro[regDest];
+                    contPrincipal.registro[regDest] = contPrincipal.registro[regFuente1] - contPrincipal.registro[regFuente2];
                     break;
                 case 12:
                     /*
                     DMUL RX, RY, #n : Rx <-- (Ry) * (Rz)
                     CodOp: 12 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    Console.WriteLine("DMUL R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
-                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] * contPrincipal.registro[regDest];
+                    contPrincipal.registro[regDest] = contPrincipal.registro[regFuente1] * contPrincipal.registro[regFuente2];
                     break;
                 case 14:
                     /*
                     DDIV RX, RY, #n : Rx <-- (Ry) / (Rz)
                     CodOp: 14 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    Console.WriteLine("DDIV R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
-                    contPrincipal.registro[regFuente1] = contPrincipal.registro[regFuente2] / contPrincipal.registro[regDest];
+                    contPrincipal.registro[regDest] = contPrincipal.registro[regFuente1] / contPrincipal.registro[regFuente2];
                     break;
                 case 4:
                     /*
                     BEQZ RX, ETIQ : Si RX = 0 salta 
                     CodOp: 4 RF1: Y RF2 O RD: 0 RD o IMM:n
                     */
-                    Console.WriteLine("BEQZ R{0},{1}", contPrincipal.registro[regFuente1], regDest);
                     if (contPrincipal.registro[regFuente1] == 0)
                     {
                         contPrincipal.pc += (regDest << 2);
@@ -148,7 +227,6 @@ namespace Arquitectura_CPU
                      BEQNZ RX, ETIQ : Si RX != 0 salta 
                      CodOp: 5 RF1: x RF2 O RD: 0 RD o IMM:n
                      */
-                    Console.WriteLine("BEQNZ R{0},{1}", contPrincipal.registro[regFuente1], regDest);
                     if (contPrincipal.registro[regFuente1] != 0)
                     {
                         //salta a la etiqueta indicada por regDest
@@ -160,7 +238,6 @@ namespace Arquitectura_CPU
                     JAL n, R31=PC, PC = PC+n
                     CodOp: 3 RF1: 0 RF2 O RD: 0 RD o IMM:n
                     */
-                    Console.WriteLine("JAL {0}", regDest);
                     contPrincipal.registro[31] = contPrincipal.pc;
                     contPrincipal.pc += regDest;
                     break;
@@ -169,7 +246,6 @@ namespace Arquitectura_CPU
                     JR RX: PC=RX
                     CodOp: 2 RF1: X RF2 O RD: 0 RD o IMM:0
                     */
-                    Console.WriteLine("JR RX{0}", contPrincipal.registro[regFuente1]);
                     contPrincipal.pc = contPrincipal.registro[regFuente1];
                     break;
                 case 63:
@@ -177,7 +253,6 @@ namespace Arquitectura_CPU
                      fin
                      CodOp: 63 RF1: 0 RF2 O RD: 0 RD o IMM:0
                      */
-                    Console.WriteLine("FIN");
                     res = true;
                     break;
 
@@ -209,7 +284,7 @@ namespace Arquitectura_CPU
                     {
                         var direccion = getPosicion(direccionRam);
                         memoriaPrincipal[direccion.Item1][direccion.Item2][m] = numeros[m];
-                        Console.WriteLine("Memoria Principal[{0}][{1}][{2}]=[{3}])", direccion.Item1, direccion.Item2, m, memoriaPrincipal[direccion.Item1][direccion.Item2][m]);
+                        //Console.WriteLine("Memoria Principal[{0}][{1}][{2}]=[{3}])", direccion.Item1, direccion.Item2, m, memoriaPrincipal[direccion.Item1][direccion.Item2][m]);
                     }
                     direccionRam += 4;
                 }
@@ -246,9 +321,9 @@ namespace Arquitectura_CPU
                         {
                             for (int i = 0; i < 4; i++)
                             {
-
-                                cacheInstrucciones[posicion.Item1 % 4][posicion.Item2+j][i] = memoriaPrincipal[posicion.Item1][posicion.Item2+j][i];
-                                Console.WriteLine("[{0}] Cache[{1}],[{2}],[{3}]=[{4}]", id, posicion.Item1 % 4, posicion.Item2+j, i, cacheInstrucciones[posicion.Item1 % 4][posicion.Item2+j][i]);
+                                //Console.WriteLine("i: "+i+" j: "+j);
+                                cacheInstrucciones[posicion.Item1 % 4][j][i] = memoriaPrincipal[posicion.Item1][j][i];
+                                //Console.WriteLine("[{0}] Cache[{1}],[{2}],[{3}]=[{4}]", id, posicion.Item1 % 4, j, i, cacheInstrucciones[posicion.Item1 % 4][j][i]);
                             }
                         }
                         blockMap[posicion.Item1 % 4] = posicion.Item1;
@@ -260,7 +335,7 @@ namespace Arquitectura_CPU
                     else
                     {
                         /// @TODO Ejecutar mofo
-                        Console.WriteLine("[{0}] {1} {2} {3} {4}, ciclo: {5}", id, cacheInstrucciones[posicion.Item1 % 4][posicion.Item2][0], cacheInstrucciones[posicion.Item1 % 4][posicion.Item2][1], cacheInstrucciones[posicion.Item1 % 4][posicion.Item2][2], cacheInstrucciones[posicion.Item1 % 4][posicion.Item2][3], cicloActual);
+                        Console.WriteLine("[{0}] ciclo: {1}, {2}", id, cicloActual, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]));
                         bool res = manejoInstrucciones(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]);
                         if(res)
                         {
