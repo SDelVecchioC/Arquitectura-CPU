@@ -43,6 +43,7 @@ namespace Arquitectura_CPU
         {
             int cantProcesadores = 3;
 
+            Consola console = new Consola();
 
             var sync = new Barrier(participantCount: cantProcesadores);
             List<string> programas = new List<string>();
@@ -62,7 +63,7 @@ namespace Arquitectura_CPU
 
             for(int i = 0; i < cantProcesadores; i++)
             {
-                var cpu = new Procesador(i+1, 2000, sync, programasPorCpu.ElementAt(i));
+                var cpu = new Procesador(i+1, 2000, sync, programasPorCpu.ElementAt(i), console);
                 var hiloCpu = new Thread(cpu.Iniciar);
 
                 procesadores.Add(cpu);
@@ -79,29 +80,31 @@ namespace Arquitectura_CPU
 
             for (int i = 0; i < cantProcesadores; i++)
             {
-                imprimirResultados(procesadores.ElementAt(i));
+                imprimirResultados(procesadores.ElementAt(i), console);
             }
 
-
+            console.WriteLine(String.Format("Puede consultar la salida de este programa en el archivo {0}", console.Guardar()));
+            console.Guardar();
+            console.WriteLine("Presione una tecla para salir");
             Console.ReadLine();
         }
 
-        private static void imprimirResultados(Procesador p)
+        private static void imprimirResultados(Procesador p, Consola console)
         {
-            Console.WriteLine("Resultados del procesador {0}:", p.id);
+            console.WriteLine(String.Format("Resultados del procesador {0}:", p.id));
             foreach (var contexto in p.contextosFinalizados)
             {
-                Console.WriteLine("Resultados del hilillo {0}:", contexto.id);
+                console.WriteLine(String.Format("Resultados del hilillo {0}:", contexto.id));
                 for (int i = 0; i < contexto.registro.Length; i++)
                 {
 
-                    Console.Write("R{0}: {1} ", i.ToString("D2"), contexto.registro[i].ToString("D5"));
+                    console.Write(String.Format("R{0}: {1} ", i.ToString("D2"), contexto.registro[i].ToString("D5")));
                     if (i % 4 == 3)
                     {
-                        Console.WriteLine("");
+                        console.WriteLine("");
                     }
                 }
-                Console.WriteLine("");
+                console.WriteLine("");
             }
 
         }

@@ -22,10 +22,11 @@ namespace Arquitectura_CPU
         public int quantum;
         public List<Contexto> contextos, contextosFinalizados;
 
+        private Consola console;
 
-
-        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas)
+        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c)
         {
+            console = c;
             this.sync = s;
             this.id = id;
             cicloActual = 1;
@@ -300,7 +301,6 @@ namespace Arquitectura_CPU
             return new Tuple<int, int>(bloque, posicion);
         }
 
-
         public void Iniciar()
         {
             while (contextos.Count > 0)
@@ -310,7 +310,7 @@ namespace Arquitectura_CPU
 
                 if(quantum == 30)
                 {
-                    Console.WriteLine("[Procesador #{0}] Hilillo #{1}, ciclo: {1}", id, contextos.ElementAt(0).id, cicloActual); 
+                    console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
                 }
 
                 if (!falloCache)
@@ -376,7 +376,7 @@ namespace Arquitectura_CPU
                 }
                 cicloActual++;
             }
-
+            
             sync.RemoveParticipant();
         }
 
