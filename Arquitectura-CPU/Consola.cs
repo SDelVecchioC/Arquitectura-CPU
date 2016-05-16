@@ -17,13 +17,13 @@ namespace Arquitectura_CPU
         public void WriteLine(String str)
         {
             Console.WriteLine(str);
-            output += str + "\n";
+            output += str + Environment.NewLine;
         }
 
         public void Write(String str)
         {
             Console.Write(str);
-            output += str + "\n";
+            output += str + Environment.NewLine;
         }
 
         public string Guardar()
