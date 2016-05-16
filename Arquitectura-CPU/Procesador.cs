@@ -273,7 +273,7 @@ namespace Arquitectura_CPU
                 // cada linea es una instruccion de 4 numeros
                 string[] instrucciones = p.Split('\n');
 
-                Contexto contexto = new Contexto(direccionRam, idPrograma);
+                Contexto contexto = new Contexto(direccionRam, idPrograma, id);
                 contextos.Add(contexto);
 
                 foreach (var i in instrucciones)
@@ -292,6 +292,7 @@ namespace Arquitectura_CPU
                 }
                 idPrograma++;
             }
+            contextos.ElementAt(0).cicloInicial = 1;
         }
 
         private Tuple<int, int> getPosicion(int direccion)
@@ -344,6 +345,7 @@ namespace Arquitectura_CPU
                         if(res)
                         {
                             //Console.WriteLine("[{0}] Murio hilo {1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual);
+                            contextos.ElementAt(0).cicloFinal = cicloActual;
                             contextosFinalizados.Add(contextos.ElementAt(0));
                             contextos.RemoveAt(0);// @TODO contmanejorolar out of bounds
                         }
@@ -355,6 +357,8 @@ namespace Arquitectura_CPU
                                 // Hacer cambio de contexto!
                                 //Console.WriteLine("[{0}] Cambio contexto, ciclo: {1}", id, cicloActual); 
                                 ShiftLeft(contextos, 1);
+                                if (contextos.ElementAt(0).cicloInicial == -1)
+                                    contextos.ElementAt(0).cicloInicial = cicloActual;
                                 quantum = 30;
                             }
                         }

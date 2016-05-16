@@ -91,10 +91,10 @@ namespace Arquitectura_CPU
 
         private static void imprimirResultados(Procesador p, Consola console)
         {
-            console.WriteLine(String.Format("Resultados del procesador {0}:", p.id));
             foreach (var contexto in p.contextosFinalizados)
             {
-                console.WriteLine(String.Format("Resultados del hilillo {0}:", contexto.id));
+                console.WriteLine(String.Format("Resultados del hilillo #{0} del procesador #{1}:", contexto.id, contexto.idProc));
+                console.WriteLine(String.Format("Ciclo Inicial: {0}. Ciclo Final: {1}. Total de ciclos: {2}", contexto.cicloInicial, contexto.cicloFinal, contexto.cicloFinal - contexto.cicloInicial));
                 for (int i = 0; i < contexto.registro.Length; i++)
                 {
 
