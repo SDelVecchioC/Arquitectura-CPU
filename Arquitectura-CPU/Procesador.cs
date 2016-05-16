@@ -24,7 +24,7 @@ namespace Arquitectura_CPU
 
         private Consola console;
 
-        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c)
+        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c, int recievedQuantum)
         {
             console = c;
             this.sync = s;
@@ -34,7 +34,7 @@ namespace Arquitectura_CPU
             falloCache = false;
             ciclosEnFallo = 0;
             // TODO recibir de usuario
-            quantum = 30;
+            quantum = recievedQuantum;
 
             cacheInstrucciones = new int[4][][];
             for (int i = 0; i < 4; i++)

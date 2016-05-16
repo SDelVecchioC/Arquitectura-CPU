@@ -50,9 +50,18 @@ namespace Arquitectura_CPU
 
             List<Procesador> procesadores = new List<Procesador>();
             List<Thread> hilos = new List<Thread>();
-
-
-            // leer los archivos y repartirlos
+            
+            // Recibe el valor de quantum del usuario
+            Console.WriteLine("Por favor indicar el quantum a utilizar");
+            string unParsedQuantum = Console.ReadLine();
+            int parsedQuantum;
+            while (!Int32.TryParse(unParsedQuantum, out parsedQuantum))
+            {
+                Console.WriteLine("El valor indicado no es numérico, por favor indicar el quantum a utilizar");
+                unParsedQuantum = Console.ReadLine();
+            } 
+                
+            // Lee los archivos y los reparte
             foreach (string file in Directory.EnumerateFiles("./programas", "*.txt"))
             {
                 string contents = File.ReadAllText(file);
@@ -63,14 +72,13 @@ namespace Arquitectura_CPU
 
             for(int i = 0; i < cantProcesadores; i++)
             {
-                var cpu = new Procesador(i+1, 2000, sync, programasPorCpu.ElementAt(i), console);
+                var cpu = new Procesador(i+1, 2000, sync, programasPorCpu.ElementAt(i), console, parsedQuantum);
                 var hiloCpu = new Thread(cpu.Iniciar);
 
                 procesadores.Add(cpu);
                 hilos.Add(hiloCpu);
 
-                hiloCpu.Start();
-          
+                hiloCpu.Start();          
             }
 
             for (int i = 0; i < cantProcesadores; i++)
