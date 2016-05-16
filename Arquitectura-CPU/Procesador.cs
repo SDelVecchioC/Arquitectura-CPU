@@ -19,6 +19,7 @@ namespace Arquitectura_CPU
         // referente a sincronizacion
         public Barrier sync;
         public int id, cicloActual, maxCiclo;
+        public int quantumGlobal;
         public int quantum;
         public List<Contexto> contextos, contextosFinalizados;
 
@@ -35,6 +36,7 @@ namespace Arquitectura_CPU
             ciclosEnFallo = 0;
             // TODO recibir de usuario
             quantum = recievedQuantum;
+            quantumGlobal = recievedQuantum;
 
             cacheInstrucciones = new int[4][][];
             for (int i = 0; i < 4; i++)
@@ -309,7 +311,7 @@ namespace Arquitectura_CPU
                 // Need to sync here
                 sync.SignalAndWait();
 
-                if(quantum == 30)
+                if(quantum == quantumGlobal)
                 {
                     console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
                 }
@@ -359,7 +361,7 @@ namespace Arquitectura_CPU
                                 ShiftLeft(contextos, 1);
                                 if (contextos.ElementAt(0).cicloInicial == -1)
                                     contextos.ElementAt(0).cicloInicial = cicloActual;
-                                quantum = 30;
+                                quantum = quantumGlobal;
                             }
                         }
                         
