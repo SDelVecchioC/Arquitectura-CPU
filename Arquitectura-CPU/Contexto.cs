@@ -15,11 +15,13 @@ namespace Arquitectura_CPU
 
         public Contexto(int pc, int id, int idProc)
         {
-            registro = new int[32];
+            registro = new int[33];
             for (int i = 0; i < 32; i++)
             {
                 registro[i] = 0;
             }
+
+            registro[32] = -1; //RL
             this.pc = pc;
             this.id = id;
             this.idProc = idProc;

@@ -72,7 +72,7 @@ namespace Arquitectura_CPU
 
             for(int i = 0; i < cantProcesadores; i++)
             {
-                var cpu = new Procesador(i+1, 2000, sync, programasPorCpu.ElementAt(i), console, parsedQuantum);
+                var cpu = new Procesador(i+1, 2000, sync, programasPorCpu.ElementAt(i), console, parsedQuantum); //pasa por referencia los otros procesadores
                 var hiloCpu = new Thread(cpu.Iniciar);
 
                 procesadores.Add(cpu);

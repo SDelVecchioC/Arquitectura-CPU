@@ -23,9 +23,20 @@ namespace Arquitectura_CPU
         public int quantum;
         public List<Contexto> contextos, contextosFinalizados;
 
-        private Consola console;
+        //directorio 
+        public int[][] directorio;
+        public int[][] cacheDatos;
+        public int[] blockMapDatos = new int[4];
 
-        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c, int recievedQuantum)
+        private Consola console;
+        
+
+        //referencia de otros procesadores 
+        /*
+        public Procesador proc1;
+        public Procesador proc2; 
+        **/
+        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c, int recievedQuantum)// ref Procesador P1, ref Procesador P2)
         {
             console = c;
             this.sync = s;
@@ -37,8 +48,11 @@ namespace Arquitectura_CPU
             // TODO recibir de usuario
             quantum = recievedQuantum;
             quantumGlobal = recievedQuantum;
-
-            cacheInstrucciones = new int[4][][];
+            /*
+            proc1 = P1;
+            proc2 = P2;
+            **/
+             cacheInstrucciones = new int[4][][];
             for (int i = 0; i < 4; i++)
             {
                 blockMap[i] = -1;
@@ -50,6 +64,40 @@ namespace Arquitectura_CPU
                     {
                         cacheInstrucciones[i][j][k] = 0;
                     }
+                }
+            }
+
+
+            directorio = new int[4][];
+            for (int j = 0; j < 4; j++)
+            {
+                directorio[j] = new int[5];
+                for (int k = 0; k < 5; k++)
+                {
+                    if (k == 0)
+                    {
+                        directorio[j][k] = 0; //0 es U, 1 es C, 2 es M
+                    }
+                    else
+                    directorio[j][k] = -1;
+                }
+            }
+
+
+
+            cacheDatos = new int[4][];
+            for (int j = 0; j < 4; j++)
+            {
+                blockMapDatos[j] = -1;
+                cacheDatos[j] = new int[5];
+                for (int k = 0; k < 5; k++)
+                {
+                    if (k == 0)
+                    {
+                        cacheDatos[j][k] = 0; //0 es U, 1 es C, 2 es M
+                    }
+                    else
+                        cacheDatos[j][k] = -1;
                 }
             }
 
@@ -259,6 +307,37 @@ namespace Arquitectura_CPU
                      */
                     res = true;
                     break;
+                case 50:
+                    /* *
+                     * LL Rx, n(Ry)
+                     * Rx <- M(n + (Ry))
+                     * Rl <- n+(Ry)
+                     * codOp: 50 RF1: Y RF2 O RD: X RD O IMM: n
+                     * */
+                    break;
+                case 51:
+                    /* *
+                     * SC RX, n(rY)
+                     * IF (rl = N+(Ry)) => m(N+(RY)) = rX
+                     * ELSE Rx =0
+                     *  codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
+                     * */
+                    break; 
+                case 35:
+                    /* *
+                    * LW Rx, n(Ry)
+                    * Rx <- M(n + (Ry))
+                    * 
+                    * codOp: 35 RF1: Y RF2 O RD: X RD O IMM: n
+                    * */
+                    break;
+                case 43:
+                    /* *
+                     * SW RX, n(rY)
+                     * m(N+(RY)) = rX
+                     * codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
+                     * */
+                    break; 
 
             }
             return res;
@@ -386,5 +465,174 @@ namespace Arquitectura_CPU
             sync.RemoveParticipant();
         }
 
+        public void loadWord(int regDest, int posMem)
+        {
+            bool bloqueoMiCache = false;
+            Contexto contPrincipal = contextos.ElementAt(0);
+            try
+            {
+                Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
+                if (bloqueoMiCache)
+                {
+                    Tuple<int, int> posicion = getPosicion(posMem);
+                    if (blockMapDatos[posicion.Item1 % 4] == posicion.Item1)
+                    
+                    //pregunta si hay hit de cache 
+                   
+                    {
+                        //lee
+                        //contPrincipal.registro[regDest] = memoriaPrincipal[posMem];
+                    }
+                    else
+                    {
+                        //calcula el bloque victima 
+                        //revisa estado del bloque victima 
+                        char estadoBloqueVictima;
+                        bool termina = false;
+                        switch (estadoBloqueVictima)
+                        {
+                            case 'C':
+                                bool bloqueoDirectorioVictimaC = false;
+                                try
+                                {
+                                    Monitor.TryEnter(directorioVictima, ref bloqueoDirectorioVictimaC);
+                                    if (bloqueoDirectorioVictimaC)
+                                    {
+                                        // Actualiza directorio.
+                                        quantum -= 4; //acceso a directorio remoto 
+
+                                    }
+                                    else
+                                    {
+                                        // Libera y termina 
+                                        termina = true;
+
+                                    }
+                                }
+                                finally
+                                {
+                                    if (bloqueoDirectorioVictimaC)
+                                    {
+                                        Monitor.Exit(directorioVictima);
+                                    }
+                                }
+                                break;
+                            case 'M':
+                                bool bloqueoDirectorioVictima = false;
+                                try
+                                {
+                                    Monitor.TryEnter(directorioVictima, ref bloqueoDirectorioVictima);
+                                    if (bloqueoDirectorioVictima)
+                                    {
+                                        quantum -= 4; //acceso a directorio remoto
+                                        // Guarda el bloque en memoria 
+                                        quantum -= 16; //escribir en memoria local un bloque desde la cache
+                                        //actualiza directorio y pone en i 
+                                        quantum -= 1; //invalidacion de un bloque 
+                                    }
+                                    else
+                                    {
+                                        termina = true;
+
+                                    }
+                                }
+                                finally
+                                {
+                                    if (bloqueoDirectorioVictima)
+                                    {
+                                        Monitor.Exit(directorioVictima);
+                                    }
+                                }
+                                break;
+                            case 'U':
+                                break;
+                        }
+
+                        if (!termina)
+                        {
+                            bool bloqueoDirectorioCasa = false;
+
+                            try
+                            {
+                                Monitor.TryEnter(directorioCasa, ref bloqueoDirectorioCasa);
+                                if (bloqueoDirectorioCasa)
+                                {
+                                    quantum -= 4; //acceso a directorio remoto
+
+                                    // Pregunta si el bloque ha sido modificado en alguna cache
+                                    if (bloqueModificado)
+                                    {
+                                        //obtiene cache que lo tiene modificado 
+                                        bool bloqueoCacheMod = false;
+                                        try
+                                        {
+                                            Monitor.TryEnter(cacheMod, ref bloqueoCacheMod);
+                                            if (bloqueoCacheMod)
+                                            {
+
+                                                // Guarda Bloque en memoria. modifica directorioCasa y lo pone en C
+                                                quantum -= 32; //escribir bloque desde cache a memoria remota
+                                            }
+                                            else
+                                            {
+                                                // Libera todo y vuelve a empezar 
+
+                                            }
+                                        }
+                                        finally
+                                        {
+                                            if (bloqueoCacheMod)
+                                            {
+                                                Monitor.Exit(cacheMod);
+                                            }
+                                        }
+                                    }
+
+                                    //jala bloque de memoria
+                                    quantum -= 16;
+                                    contPrincipal.registro[regDest] = memoriaPrincipal[posMem];
+                                    //pone bloque en C
+
+                                    //libera todo 
+
+                                }
+                                else
+                                {
+                                    // libera y vuelve a empezar.
+
+                                }
+                            }
+                            finally
+                            {
+                                if (bloqueoDirectorioCasa)
+                                {
+                                    Monitor.Exit(directorioCasa);
+                                }
+                            }
+                        }
+                    }
+
+                }
+                else
+                {
+                    // Barrera Barrera
+                    //vuelve a empezar 
+
+                }
+            }
+            finally
+            {
+                if (bloqueoMiCache)
+                {
+                    Monitor.Exit(miCache);
+                }
+            }
+        }
+
+    
+    
     }
+
+
+  
 }
