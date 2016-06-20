@@ -62,3 +62,4 @@ C:\Users\b32831\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura
 C:\Users\b32831\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
 C:\Users\b32831\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.exe
 C:\Users\b32831\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
+C:\Users\b30640\Desktop\Arquitectura-CPU-gloryStore\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe.config
