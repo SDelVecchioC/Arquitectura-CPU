@@ -680,33 +680,132 @@ namespace Arquitectura_CPU
         public void loadWord(int regDest, int posMem)
         {
             bool bloqueoMiCache = false;
+            var direccion = getPosicion(posMem);
             Contexto contPrincipal = contextos.ElementAt(0);
             try
             {
                 Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
+                #region bloqueoMiCache
                 if (bloqueoMiCache)
                 {
-                    Tuple<int, int> posicion = getPosicion(posMem);
-                    int cacheProc = getNumeroProcesador(posicion.Item1);
-                    if (cacheProc == id)
-                    {
-                        // DEBERIA ESTAR EN MI CACHE
-                        if (blockMapDatos[posicion.Item1 % 4] == posicion.Item1)
+                    
+                    int cacheProc = getNumeroProcesador(direccion.Item1);
+                        
+                        if (bloqueEnMiCache(direccion))
                         {
                             //HIT
-                            //contPrincipal.registro[regDest] = memoriaPrincipal[posMem];
+                            contPrincipal.registro[regDest] = memoriaPrincipal[direccion.Item1][direccion.Item2][0]; //????
                         }
                         else
                         {
-                            // MISS
+                        // MISS
+                        //revisa el estado de bloque víctima 
+                        int estadoBloqueVictima = this.cacheDatos[direccion.Item1 % 4][0];
+                        #region estatusBloqueVictima
+                        if (estadoBloqueVictima == 1 || estadoBloqueVictima == 2)
+                        {
+                            // pide directorio de bloque victima 
+                            // lo bloquea 
+                            int numeroBloqueVictima = this.cacheDatos[direccion.Item1 % 4][1];
+                            int procesadorBloqueVictima = getNumeroProcesador(numeroBloqueVictima);
+                            bool bloqueoDirecVictima = false;
+
+                            try
+                            {
+                                Monitor.TryEnter(procesadores.ElementAt(procesadorBloqueVictima).directorio, ref bloqueoDirecVictima);
+                                if (bloqueoDirecVictima)
+                                {
+                                    // bloqueo directorio victima
+
+                                    if (estadoBloqueVictima == 1)
+                                    {
+                                        // el bloque vicitma está C
+                                        
+                                        procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % 4][this.id] = 0; // actualiza el directorio poniendo cero 
+                                        // poner I cache propia
+                                        this.cacheDatos[direccion.Item1 % 4][1] = 0;
+                                    }
+                                    else if (estadoBloqueVictima == 2)
+                                    {
+                                        // el bloque víctima está M
+                                        // manda a guardar el bloque   
+                                        // actualizar directorio
+                                        // poner I cache propia
+                                        this.cacheDatos[direccion.Item1 % 4][1] = 0;
+                                    }
+                                }
+                                else
+                                {
+                                    // libero si no lo dan 
+                                    bloqueoMiCache = false;
+                                    Monitor.Exit(this.cacheDatos);
+                                }
+                            }
+                            finally
+                            {
+                                if (bloqueoDirecVictima)
+                                {
+                                    Monitor.Exit(procesadores.ElementAt(numeroBloqueVictima).directorio);
+                                }
+                            }
                         }
+                        #endregion
+
+                        int numProcBloque = getNumeroProcesador(direccion.Item1);
+                        bool bloqueoDirecBloque = false;
+
+                        try
+                        {
+                            Monitor.TryEnter(procesadores.ElementAt(numProcBloque).directorio, ref bloqueoDirecBloque);
+                            if (bloqueoDirecBloque)
+                            {
+                                #region directorioDeBloqueDestinoLW
+                                // tengo directorio bloque que quiero leer
+                                int estadoBloque = procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][0];
+                                // estados son U C M
+                                switch (estadoBloque)
+                                {
+                                   
+                                    case 1:
+                                        // C
+                                        // bloquea directorio 
+                                        // actualiza 
+                                        break;
+                                    case 2:
+                                        // M
+                                        // bloquea directorio
+                                        // 
+                                        // guarda en memoria, actualiza directorio
+                                        // 
+                                        break;
+                                }
+                                #endregion
+								
+								//jala el bloque de memoria
+								//pone en C en el directorio y en la cache
+								//libera
+                            }
+                            else
+                            {
+                                // libera
+                            }
+                        }
+                        finally
+                        {
+                            if (bloqueoDirecBloque)
+							{
+								Monitor.Exit(procesadores.ElementAt(numProcBloque).directorio);
+							}
+							
+                        }
+#endregion
                     }
-                    else 
-                    {
-                        Monitor.Exit(this.cacheDatos);
-                        // ESTA EN OTRO PROCESADOR
-                    }
+
                 }
+                    
+                    
+                }
+                #endregion
                 else
                 {
                     // Barrera Barrera
