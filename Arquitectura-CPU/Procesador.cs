@@ -694,7 +694,7 @@ namespace Arquitectura_CPU
                         if (bloqueEnMiCache(direccion))
                         {
                             //HIT
-                            contPrincipal.registro[regDest] = memoriaPrincipal[direccion.Item1][direccion.Item2][0]; //????
+                            contPrincipal.registro[regDest] = this.cacheDatos[direccion.Item1][direccion.Item2]; //????
                         }
                         else
                         {
@@ -716,7 +716,14 @@ namespace Arquitectura_CPU
                                 if (bloqueoDirecVictima)
                                 {
                                     // bloqueo directorio victima
-
+                                    if (procesadorBloqueVictima == this.id)
+                                    {
+                                        quantum -= 2; //ciclos que gasta en consulta directorio local
+                                    }
+                                    else
+                                    {
+                                        quantum -= 4; //ciclos que gasta en consulta directorio remoto
+                                    }
                                     if (estadoBloqueVictima == 1)
                                     {
                                         // el bloque vicitma está C
@@ -731,7 +738,13 @@ namespace Arquitectura_CPU
                                         // manda a guardar el bloque   
                                         // actualizar directorio
                                         // poner I cache propia
-                                        this.cacheDatos[direccion.Item1 % 4][1] = 0;
+                                        
+                                        for( int i = 0; i < 4; i++)
+                                        {
+                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % 4][i+2];
+                                        }
+                                        quantum -= 16;
+                                        this.cacheDatos[direccion.Item1 % 4][1] =0; //invalida la caché 
                                     }
                                 }
                                 else
@@ -761,29 +774,68 @@ namespace Arquitectura_CPU
                             {
                                 #region directorioDeBloqueDestinoLW
                                 // tengo directorio bloque que quiero leer
+                                if(numProcBloque==this.id)
+                                {
+                                    quantum -= 2; //ciclos que gasta en consulta directorio local
+                                }
+                                else
+                                {
+                                    quantum -= 4; //ciclos que gasta en consulta directorio remoto
+                                }
                                 int estadoBloque = procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][0];
                                 // estados son U C M
                                 switch (estadoBloque)
                                 {
-                                   
+
+                                    /**
                                     case 1:
                                         // C
                                         // bloquea directorio 
                                         // actualiza 
+                                        procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][this.id] = 0; //lo pone como inválido
+                                        //el id es el numero de procesador 
                                         break;
+                                    **/
                                     case 2:
                                         // M
                                         // bloquea directorio
                                         // 
+                                        for (int i = 0; i < 4; i++)
+                                        {
+                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % 4][i + 2]; //??
+                                        }
                                         // guarda en memoria, actualiza directorio
                                         // 
+                                        procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][this.id] = 0; //invalida
                                         break;
                                 }
                                 #endregion
-								
-								//jala el bloque de memoria
-								//pone en C en el directorio y en la cache
-								//libera
+
+
+
+                                //jala el bloque de memoria
+                                this.cacheDatos[direccion.Item1 % 4][0] = direccion.Item1;
+                                this.cacheDatos[direccion.Item1 % 4][1] = 1; //pone en c en la cache 
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    this.cacheDatos[direccion.Item1 % 4][i + 2] = memoriaPrincipal[direccion.Item1][direccion.Item2][i];
+                                }
+                                if (numProcBloque == this.id)
+                                {
+                                    quantum -= 16; //ciclos que gasta en cargar de memoria local
+                                }
+                                else
+                                {
+                                    quantum -= 32; //ciclos que gasta en cargar de memoria remoto
+                                }
+                                procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][this.id] = 1; //pone en c en el directorio.
+                                //pone en C en el directorio y en la cache
+                                //libera
+
+                                contPrincipal.registro[regDest] = this.cacheDatos[direccion.Item1 % 4][direccion.Item2];
+
+
+
                             }
                             else
                             {
@@ -798,13 +850,13 @@ namespace Arquitectura_CPU
 							}
 							
                         }
-#endregion
+
                     }
 
                 }
                     
                     
-                }
+                
                 #endregion
                 else
                 {
@@ -817,7 +869,7 @@ namespace Arquitectura_CPU
             {
                 if (bloqueoMiCache)
                 {
-                    //Monitor.Exit(miCache);
+                    Monitor.Exit(this.cacheDatos);
                 }
             }
         }
