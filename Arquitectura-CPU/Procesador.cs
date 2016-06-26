@@ -67,7 +67,7 @@ namespace Arquitectura_CPU
 
             quantum = recievedQuantum;
 
-             cacheInstrucciones = new int[4][][];
+            cacheInstrucciones = new int[4][][];
             for (int i = 0; i < 4; i++)
             {
                 blockMap[i] = -1;
@@ -127,7 +127,11 @@ namespace Arquitectura_CPU
                 for (int j = 0; j < 4; j++)
                 {
                     memoriaPrincipal[i][j] = new int[4];
-                    memoriaPrincipal[i][j][0] = 1;
+                    for(int k = 0; k < 4; k++)
+                    {
+                        memoriaPrincipal[i][j][k] = 1;
+                    }
+                    
                 }
             }
             //parte no compartida 
