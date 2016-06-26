@@ -9,6 +9,16 @@ namespace Arquitectura_CPU
 {
     class Procesador
     {
+
+        // constantes: para salud mental
+        public const int CACHDAT_FILAS = 4;
+        public const int CACHDAT_COLUMNAS = 5;
+        public const int CACHDAT_COL_ESTADO = 0;
+
+        public const int ESTADO_INVALIDO = 0;
+        public const int ESTADO_COMPARTIDO = 1;
+        public const int ESTADO_MODIFICADO = 2;
+
         // estructuras de datos del procesador
         public int[][][] cacheInstrucciones;
         public int[][][] memoriaPrincipal;
@@ -25,20 +35,19 @@ namespace Arquitectura_CPU
 
         //directorio 
         public int[][] directorio;
+
+        // cacheDatos[4][5]
+        // 4 filas -> cantidad de bloques
+        // 5 columnas -> 0 para ESTADO, 4 de DATOS
         public int[][] cacheDatos;
-        public int[] blockMapDatos = new int[4];
+        public int[] blockMapDatos;
 
         private Consola console;
 
         public List<Procesador> procesadores { get; set; }
         
 
-        //referencia de otros procesadores 
-        /*
-        public Procesador proc1;
-        public Procesador proc2; 
-        **/
-        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c, int recievedQuantum)// ref Procesador P1, ref Procesador P2)
+        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c, int recievedQuantum)
         {
             console = c;
             this.sync = s;
@@ -47,13 +56,10 @@ namespace Arquitectura_CPU
             this.maxCiclo = maxCiclo;
             falloCache = false;
             ciclosEnFallo = 0;
-            // TODO recibir de usuario
+
             quantum = recievedQuantum;
             quantumGlobal = recievedQuantum;
-            /*
-            proc1 = P1;
-            proc2 = P2;
-            **/
+
              cacheInstrucciones = new int[4][][];
             for (int i = 0; i < 4; i++)
             {
@@ -86,16 +92,18 @@ namespace Arquitectura_CPU
                 }
             }
 
-            cacheDatos = new int[4][];
-            for (int j = 0; j < 4; j++)
+            cacheDatos = new int[CACHDAT_FILAS][];
+            blockMapDatos = new int[CACHDAT_FILAS];
+
+            for (int j = 0; j < CACHDAT_FILAS; j++)
             {
                 blockMapDatos[j] = -1;
-                cacheDatos[j] = new int[6];
-                for (int k = 0; k < 6; k++)
-                {  //son 6 columnas, una para el estado, otra para la etiqueta del bloque y el resto para las 4 palabras
-                    if (k == 0)
+                cacheDatos[j] = new int[CACHDAT_COLUMNAS];
+                for (int k = 0; k < CACHDAT_COLUMNAS; k++)
+                {  
+                    if (k == CACHDAT_COL_ESTADO)
                     {
-                        cacheDatos[j][k] = 0; //0 es U, 1 es C, 2 es M
+                        cacheDatos[j][k] = ESTADO_INVALIDO;
                     }
                     else
                     {
@@ -147,7 +155,7 @@ namespace Arquitectura_CPU
 
         public bool bloqueEnMiCache(Tuple<int, int> direccion)
         {
-            return this.cacheDatos[direccion.Item1 % 4][1] == direccion.Item1;
+            return blockMapDatos[direccion.Item1 % CACHDAT_FILAS] == direccion.Item1;
         }
 
         public int getNumDirectorio(int posMem)
@@ -175,7 +183,7 @@ namespace Arquitectura_CPU
                             Monitor.TryEnter(procesadores.ElementAt(i).cacheDatos, ref bloqueoCacheActual);
                             if (bloqueoCacheActual)
                             {
-                                procesadores.ElementAt(i).cacheDatos[direccion.Item1%4][0] = 0;//invalida en la caché
+                                procesadores.ElementAt(i).cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;//invalida en la caché
                                 i++;
                             }
                             else
@@ -199,12 +207,12 @@ namespace Arquitectura_CPU
             }
             if (bloqueoTodasLasCaches)
             {
-                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % 8][0] = 2; //pone estado en Modificado en el directorio
-                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % 8][id + 1] = 1; //indica que en el procesador numero id tiene al bloque modificado 
+                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % 8][0] = 2; // pone estado en Modificado en el directorio
+                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % 8][id + 1] = 1; // indica que en el procesador numero id tiene al bloque modificado 
                 if (hit)
                 {
-                    this.cacheDatos[direccion.Item1 % 4][0] = 2; //modifica el estado del bloque en la cache
-                    this.cacheDatos[direccion.Item1 % 4][direccion.Item2] = valRegFuente;
+                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO; // modifica el estado del bloque en la cache
+                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = valRegFuente;
                 }
                 else
                 {
@@ -216,15 +224,19 @@ namespace Arquitectura_CPU
 
         public void jalarBloqueDeMemoria(Tuple<int, int> direccion, int numProcBloque, int valRegFuente)
         {
-            this.cacheDatos[direccion.Item1 % 4][0] = 2; //lo pone en la cache como modificado  
-            this.cacheDatos[direccion.Item1 % 4][1] = direccion.Item1; //pone la etiqueta del bloque 
+            int bloke = direccion.Item1 % CACHDAT_FILAS;
+            this.cacheDatos[bloke][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO; // lo pone en la cache como modificado  
+            this.blockMapDatos[bloke] = direccion.Item1; // pone la etiqueta del bloque 
+
             for (int i = 0; i < 4; i++)
             {
-                this.cacheDatos[direccion.Item1 % 4][i + 2] = memoriaPrincipal[direccion.Item1][direccion.Item2][i];
+                this.cacheDatos[bloke][i + 1] = memoriaPrincipal[direccion.Item1][direccion.Item2][i]; // + 1 por la columna 0 de estado
             }
-            this.cacheDatos[direccion.Item1 % 4][direccion.Item2] = valRegFuente;
-            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][0] = 2; //lo pone modificado en el directorio 
-            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][id + 1] = 1; //indica la cache del procesador en el que esta modificado 
+
+            this.cacheDatos[bloke][direccion.Item2] = valRegFuente;
+
+            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][0] = 2; // lo pone modificado en el directorio 
+            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][id + 1] = 1; // indica la cache del procesador en el que esta modificado 
         }
         public void storeWord(int posMem, int regFuente)
         {
@@ -242,12 +254,12 @@ namespace Arquitectura_CPU
                     {
                         #region HitEnMiCache
                         // hit en mi caché
-                        int estadoMiBloque = this.cacheDatos[direccion.Item1 % 4][0];
+                        int estadoMiBloque = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
                         //0 es I, 1 es C, 2 es M
                         // pregunta por el estado
                         switch (estadoMiBloque)
                         {
-                            case 1:
+                            case ESTADO_COMPARTIDO:
                                 #region Compartido
                                 // el bloque esta C 
                                 // pide directorio casa del bloque que esta C
@@ -285,11 +297,11 @@ namespace Arquitectura_CPU
                                 }
                                 break;
                                 #endregion
-                            case 2:
+                            case ESTADO_MODIFICADO:
                                 //si el bloque esta M 
                                 // escribe
                                 //memoriaPrincipal[direccion.Item1][direccion.Item2][0]
-                                this.cacheDatos[direccion.Item1 % 4][direccion.Item2] = contPrincipal.registro[regFuente]; //no estoy segura que esa sea la pos de mem
+                                this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente]; //no estoy segura que esa sea la pos de mem
                                 break;
                         }
                         #endregion
@@ -299,13 +311,13 @@ namespace Arquitectura_CPU
                         #region MissEnMiCache
                         // miss en mi caché
 
-                        int estadoBloqueVictima = this.cacheDatos[direccion.Item1 % 4][0];
+                        int estadoBloqueVictima = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
                         #region estatusBloqueVictima
-                        if (estadoBloqueVictima == 1 || estadoBloqueVictima == 2)
+                        if (estadoBloqueVictima == ESTADO_COMPARTIDO || estadoBloqueVictima == ESTADO_MODIFICADO)
                         {
                             // pide directorio de bloque victima 
                             // lo bloquea 
-                            int numeroBloqueVictima = this.cacheDatos[direccion.Item1 % 4][1];
+                            int numeroBloqueVictima = this.blockMapDatos[direccion.Item1 % CACHDAT_FILAS];
                             int procesadorBloqueVictima = getNumeroProcesador(numeroBloqueVictima);
                             bool bloqueoDirecVictima = false;
 
@@ -316,21 +328,21 @@ namespace Arquitectura_CPU
                                 {
                                     // bloqueo directorio victima
 
-                                    if (estadoBloqueVictima == 1)
+                                    if (estadoBloqueVictima == ESTADO_COMPARTIDO)
                                     {
                                                                              
                                         procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % 8][procesadorBloqueVictima] = 0;  // actualiza el directorio poniendo cero
-                                        this.cacheDatos[direccion.Item1 % 4][0] = 0;// poner I cache propia
+                                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;// poner I cache propia
                                     }
-                                    else if (estadoBloqueVictima == 2)
+                                    else if (estadoBloqueVictima == ESTADO_MODIFICADO)
                                     {
                                         // manda a guardar el bloque   
                                         for (int i = 0; i < 4; i++)
                                         {
-                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % 4][i + 2];
+                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1];
                                         }
                                         procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % 8][procesadorBloqueVictima] = 0;  // actualiza el directorio poniendo cero
-                                        this.cacheDatos[direccion.Item1 % 4][0] = 0;// poner I cache propia
+                                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][0] = ESTADO_INVALIDO;// poner I cache propia
                                     }
                                 }
                                 else
@@ -500,6 +512,15 @@ namespace Arquitectura_CPU
                      */
                     res = String.Format("FIN");
                     break;
+                case 35:
+                    /* *
+                    * LW Rx, n(Ry)
+                    * Rx <- M(n + (Ry))
+                    * 
+                    * codOp: 35 RF1: Y RF2 O RD: X RD O IMM: n
+                    * */
+                    res = String.Format("LW R{0} {1}(R{2})", regFuente2, regDest, regFuente1);
+                    break;
             }
             return res;
         }
@@ -619,6 +640,8 @@ namespace Arquitectura_CPU
                     * 
                     * codOp: 35 RF1: Y RF2 O RD: X RD O IMM: n
                     * */
+                    int posMem = contPrincipal.registro[regFuente1] + regDest;
+                    loadWord(regFuente2, posMem);
                     break;
                 case 43:
                     /* *
@@ -715,7 +738,7 @@ namespace Arquitectura_CPU
                     else
                     {
                         /// @TODO Ejecutar mofo
-                        //Console.WriteLine("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]));
+                        Console.WriteLine("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]));
                         bool res = manejoInstrucciones(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]);
                         if(res)
                         {
@@ -736,10 +759,8 @@ namespace Arquitectura_CPU
                                     contextos.ElementAt(0).cicloInicial = cicloActual;
                                 quantum = quantumGlobal;
                             }
-                        }
-                        
+                        }   
                     }
-
                 }
                 else
                 {
@@ -759,7 +780,7 @@ namespace Arquitectura_CPU
             sync.RemoveParticipant();
         }
 
-        public void loadWord(int regDest, int posMem)
+        public void loadWord(int regFuente2, int posMem)
         {
             bool bloqueoMiCache = false;
             var direccion = getPosicion(posMem);
@@ -776,19 +797,19 @@ namespace Arquitectura_CPU
                         if (bloqueEnMiCache(direccion))
                         {
                             //HIT
-                            contPrincipal.registro[regDest] = this.cacheDatos[direccion.Item1][direccion.Item2]; //????
+                            contPrincipal.registro[regFuente2] = this.cacheDatos[direccion.Item1][direccion.Item2]; //????
                         }
                         else
                         {
                         // MISS
                         //revisa el estado de bloque víctima 
-                        int estadoBloqueVictima = this.cacheDatos[direccion.Item1 % 4][0];
+                        int estadoBloqueVictima = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
                         #region estatusBloqueVictima
-                        if (estadoBloqueVictima == 1 || estadoBloqueVictima == 2)
+                        if (estadoBloqueVictima == ESTADO_COMPARTIDO || estadoBloqueVictima == ESTADO_MODIFICADO)
                         {
                             // pide directorio de bloque victima 
                             // lo bloquea 
-                            int numeroBloqueVictima = this.cacheDatos[direccion.Item1 % 4][1];
+                            int numeroBloqueVictima = this.blockMapDatos[direccion.Item1 % CACHDAT_FILAS];
                             int procesadorBloqueVictima = getNumeroProcesador(numeroBloqueVictima);
                             bool bloqueoDirecVictima = false;
 
@@ -823,10 +844,10 @@ namespace Arquitectura_CPU
                                         
                                         for( int i = 0; i < 4; i++)
                                         {
-                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % 4][i+2];
+                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1];
                                         }
                                         quantum -= 16;
-                                        this.cacheDatos[direccion.Item1 % 4][1] =0; //invalida la caché 
+                                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO; //invalida la caché 
                                     }
                                 }
                                 else
@@ -884,7 +905,7 @@ namespace Arquitectura_CPU
                                         // 
                                         for (int i = 0; i < 4; i++)
                                         {
-                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % 4][i + 2]; //??
+                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1]; //??
                                         }
                                         // guarda en memoria, actualiza directorio
                                         // 
@@ -893,14 +914,12 @@ namespace Arquitectura_CPU
                                 }
                                 #endregion
 
-
-
                                 //jala el bloque de memoria
-                                this.cacheDatos[direccion.Item1 % 4][0] = direccion.Item1;
-                                this.cacheDatos[direccion.Item1 % 4][1] = 1; //pone en c en la cache 
+                                this.blockMapDatos[direccion.Item1 % CACHDAT_FILAS] = direccion.Item1;
+                                this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_COMPARTIDO; //pone en c en la cache 
                                 for (int i = 0; i < 4; i++)
                                 {
-                                    this.cacheDatos[direccion.Item1 % 4][i + 2] = memoriaPrincipal[direccion.Item1][direccion.Item2][i];
+                                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1] = memoriaPrincipal[direccion.Item1][direccion.Item2][i];
                                 }
                                 if (numProcBloque == this.id)
                                 {
@@ -914,9 +933,7 @@ namespace Arquitectura_CPU
                                 //pone en C en el directorio y en la cache
                                 //libera
 
-                                contPrincipal.registro[regDest] = this.cacheDatos[direccion.Item1 % 4][direccion.Item2];
-
-
+                                contPrincipal.registro[regFuente2] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2];
 
                             }
                             else

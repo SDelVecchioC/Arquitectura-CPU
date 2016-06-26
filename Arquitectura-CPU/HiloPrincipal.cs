@@ -70,15 +70,24 @@ namespace Arquitectura_CPU
 
             var programasPorCpu = Partition(programas, cantProcesadores);
 
-            for(int i = 0; i < cantProcesadores; i++)
+            // creacion de procesadores
+            for (int i = 0; i < cantProcesadores; i++)
             {
-                var cpu = new Procesador(i+1, 2000, sync, programasPorCpu.ElementAt(i), console, parsedQuantum); //pasa por referencia los otros procesadores
-                var hiloCpu = new Thread(cpu.Iniciar);
-
+                var cpu = new Procesador(i, 2000, sync, programasPorCpu.ElementAt(i), console, parsedQuantum); //pasa por referencia los otros procesadores
                 procesadores.Add(cpu);
-                hilos.Add(hiloCpu);
+            }
 
-                hiloCpu.Start();          
+            for (int i = 0; i < cantProcesadores; i++)
+            {
+                procesadores.ElementAt(i).setProcesadores(procesadores);
+            }
+
+            // creacion de hilos
+            for (int i = 0; i < cantProcesadores; i++)
+            {
+                var hiloCpu = new Thread(procesadores.ElementAt(i).Iniciar);
+                hilos.Add(hiloCpu);
+                hiloCpu.Start();
             }
 
             for (int i = 0; i < cantProcesadores; i++)
