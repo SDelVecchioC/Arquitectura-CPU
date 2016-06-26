@@ -29,13 +29,13 @@ namespace Arquitectura_CPU
         public int[][][] cacheInstrucciones;
         public int[][][] memoriaPrincipal;
         public int[] blockMap = new int[4];
-        bool falloCache;
-        int ciclosEnFallo;
+
+        private bool estoyEnRetraso;
+        private int ciclosEnRetraso;
 
         // referente a sincronizacion
         public Barrier sync;
         public int id, cicloActual, maxCiclo;
-        public int quantumGlobal;
         public int quantum;
         public List<Contexto> contextos, contextosFinalizados;
 
@@ -62,11 +62,10 @@ namespace Arquitectura_CPU
             this.id = id;
             cicloActual = 1;
             this.maxCiclo = maxCiclo;
-            falloCache = false;
-            ciclosEnFallo = 0;
+            estoyEnRetraso = false;
+            ciclosEnRetraso = 0;
 
             quantum = recievedQuantum;
-            quantumGlobal = recievedQuantum;
 
              cacheInstrucciones = new int[4][][];
             for (int i = 0; i < 4; i++)
@@ -755,11 +754,13 @@ namespace Arquitectura_CPU
                                     // bloqueo directorio victima
                                     if (procesadorBloqueVictima == this.id)
                                     {
-                                        quantum -= 2; //ciclos que gasta en consulta directorio local
+                                        estoyEnRetraso = true;
+                                        ciclosEnRetraso += 2; //ciclos que gasta en consulta directorio local
                                     }
                                     else
                                     {
-                                        quantum -= 4; //ciclos que gasta en consulta directorio remoto
+                                        estoyEnRetraso = true;
+                                        ciclosEnRetraso += 4; //ciclos que gasta en consulta directorio remoto
                                     }
                                     if (estadoBloqueVictima == 1)
                                     {
@@ -780,7 +781,8 @@ namespace Arquitectura_CPU
                                         {
                                             memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1];
                                         }
-                                        quantum -= 16;
+                                        estoyEnRetraso = true;
+                                        ciclosEnRetraso += 16;
                                         this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO; //invalida la caché 
                                     }
                                 }
@@ -813,11 +815,13 @@ namespace Arquitectura_CPU
                                 // tengo directorio bloque que quiero leer
                                 if (numProcBloque == this.id)
                                 {
-                                    quantum -= 2; //ciclos que gasta en consulta directorio local
+                                    estoyEnRetraso = true;
+                                    ciclosEnRetraso += 2; // ciclos que gasta en consulta directorio local
                                 }
                                 else
                                 {
-                                    quantum -= 4; //ciclos que gasta en consulta directorio remoto
+                                    estoyEnRetraso = true;
+                                    ciclosEnRetraso += 4; // ciclos que gasta en consulta directorio remoto
                                 }
                                 int estadoBloque = procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO];
                                 // estados son U C M
@@ -857,11 +861,13 @@ namespace Arquitectura_CPU
                                 }
                                 if (numProcBloque == this.id)
                                 {
-                                    quantum -= 16; //ciclos que gasta en cargar de memoria local
+                                    estoyEnRetraso = true;
+                                    ciclosEnRetraso += 16; //ciclos que gasta en cargar de memoria local
                                 }
                                 else
                                 {
-                                    quantum -= 32; //ciclos que gasta en cargar de memoria remoto
+                                    estoyEnRetraso = true;
+                                    ciclosEnRetraso += 32; //ciclos que gasta en cargar de memoria remoto
                                 }
                                 procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][this.id] = ESTADO_COMPARTIDO; //pone en c en el directorio.
                                 //pone en C en el directorio y en la cache
@@ -912,12 +918,9 @@ namespace Arquitectura_CPU
                 // Need to sync here
                 sync.SignalAndWait();
 
-                if(quantum == quantumGlobal)
-                {
-                    console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
-                }
+                console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
 
-                if (!falloCache)
+                if (!estoyEnRetraso)
                 {
 
                     int pc = contextos.ElementAt(0).pc;
@@ -936,14 +939,14 @@ namespace Arquitectura_CPU
                         }
                         blockMap[posicion.Item1 % 4] = posicion.Item1;
 
-                        falloCache = true;
-                        ciclosEnFallo = 16;
+                        estoyEnRetraso = true;
+                        ciclosEnRetraso = 16;
                         //Console.WriteLine("[{0}] Fallo de cache, ciclo: {1}", id, cicloActual);
                     }
                     else
                     {
                         /// @TODO Ejecutar mofo
-                        Console.WriteLine("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]));
+                        console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2])));
                         bool res = manejoInstrucciones(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]);
                         if(res)
                         {
@@ -962,7 +965,6 @@ namespace Arquitectura_CPU
                                 ShiftLeft(contextos, 1);
                                 if (contextos.ElementAt(0).cicloInicial == -1)
                                     contextos.ElementAt(0).cicloInicial = cicloActual;
-                                quantum = quantumGlobal;
                             }
                         }   
                     }
@@ -970,13 +972,13 @@ namespace Arquitectura_CPU
                 else
                 {
                     // si hay fallo de cache, el quantum no avanza
-                    if (ciclosEnFallo == 0)
+                    if (ciclosEnRetraso == 0)
                     {
-                        falloCache = false;
+                        estoyEnRetraso = false;
                     }
                     else
                     {
-                        ciclosEnFallo--;
+                        ciclosEnRetraso--;
                     }
                 }
                 cicloActual++;
