@@ -157,11 +157,78 @@ namespace Arquitectura_CPU
             return numDirectorio; 
         }
 
+
+        public void invalidarEnOtrasCaches(Tuple<int, int> direccion, int numProc, int valRegFuente, bool hit)
+        {
+            int i = 1;
+            bool bloqueoTodasLasCaches = true;
+            while (i < 4)
+            {
+                if (i != (id + 1))//solo invalida trata de bloquear las otras caches
+                {
+                    if (procesadores.ElementAt(numProc).directorio[(direccion.Item1) % 8][i] == 1) //si está en uno es xq esa cache lo tiene C
+                    {
+                        procesadores.ElementAt(numProc).directorio[(direccion.Item1) % 8][i] = 0; //invalida en el directorio 
+                        bool bloqueoCacheActual = false;
+                        try
+                        {
+                            Monitor.TryEnter(procesadores.ElementAt(i).cacheDatos, ref bloqueoCacheActual);
+                            if (bloqueoCacheActual)
+                            {
+                                procesadores.ElementAt(i).cacheDatos[direccion.Item1%4][0] = 0;//invalida en la caché
+                                i++;
+                            }
+                            else
+                            {
+                                i = 5;
+                                bloqueoTodasLasCaches = false;
+                                //Libera todo y vuelve a empezar 
+                            }
+
+                        }
+                        finally
+                        {
+                            if (bloqueoCacheActual)
+                            {
+                                Monitor.Exit(procesadores.ElementAt(i).cacheDatos);
+                            }
+                        }
+
+                    }
+                }
+            }
+            if (bloqueoTodasLasCaches)
+            {
+                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % 8][0] = 2; //pone estado en Modificado en el directorio
+                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % 8][id + 1] = 1; //indica que en el procesador numero id tiene al bloque modificado 
+                if (hit)
+                {
+                    this.cacheDatos[direccion.Item1 % 4][0] = 2; //modifica el estado del bloque en la cache
+                    this.cacheDatos[direccion.Item1 % 4][direccion.Item2] = valRegFuente;
+                }
+                else
+                {
+                    jalarBloqueDeMemoria(direccion, numProc, valRegFuente);
+                }
+               
+            }
+        }
+
+        public void jalarBloqueDeMemoria(Tuple<int, int> direccion, int numProcBloque, int valRegFuente)
+        {
+            this.cacheDatos[direccion.Item1 % 4][0] = 2; //lo pone en la cache como modificado  
+            this.cacheDatos[direccion.Item1 % 4][1] = direccion.Item1; //pone la etiqueta del bloque 
+            for (int i = 0; i < 4; i++)
+            {
+                this.cacheDatos[direccion.Item1 % 4][i + 2] = memoriaPrincipal[direccion.Item1][direccion.Item2][i];
+            }
+            this.cacheDatos[direccion.Item1 % 4][direccion.Item2] = valRegFuente;
+            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][0] = 2; //lo pone modificado en el directorio 
+            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % 8][id + 1] = 1; //indica la cache del procesador en el que esta modificado 
+        }
         public void storeWord(int posMem, int regFuente)
         {
-
             bool bloqueoMiCache = false;
-
             var direccion = getPosicion(posMem);
             Contexto contPrincipal = contextos.ElementAt(0);
             try
@@ -175,7 +242,6 @@ namespace Arquitectura_CPU
                     {
                         #region HitEnMiCache
                         // hit en mi caché
-
                         int estadoMiBloque = this.cacheDatos[direccion.Item1 % 4][0];
                         //0 es I, 1 es C, 2 es M
                         // pregunta por el estado
@@ -198,6 +264,10 @@ namespace Arquitectura_CPU
                                         // si hay, bloqueo caches e invalido
                                         // me devuelvo a lo mio y modifico
                                         // actualizo el directorio
+                                        #region invalidaEnCaches
+                                        invalidarEnOtrasCaches(direccion, numProc, contPrincipal.registro[regFuente], true);
+                                  
+                                        #endregion
                                     }
                                     else
                                     {
@@ -218,7 +288,8 @@ namespace Arquitectura_CPU
                             case 2:
                                 //si el bloque esta M 
                                 // escribe
-                                memoriaPrincipal[direccion.Item1][direccion.Item2][0] = contPrincipal.registro[regFuente]; //no estoy segura que esa sea la pos de mem
+                                //memoriaPrincipal[direccion.Item1][direccion.Item2][0]
+                                this.cacheDatos[direccion.Item1 % 4][direccion.Item2] = contPrincipal.registro[regFuente]; //no estoy segura que esa sea la pos de mem
                                 break;
                         }
                         #endregion
@@ -228,13 +299,13 @@ namespace Arquitectura_CPU
                         #region MissEnMiCache
                         // miss en mi caché
 
-                        int estadoBloqueVictima = cacheDatos[direccion.Item1 % 4][0];
+                        int estadoBloqueVictima = this.cacheDatos[direccion.Item1 % 4][0];
                         #region estatusBloqueVictima
                         if (estadoBloqueVictima == 1 || estadoBloqueVictima == 2)
                         {
                             // pide directorio de bloque victima 
                             // lo bloquea 
-                            int numeroBloqueVictima = cacheDatos[direccion.Item1 % 4][1];
+                            int numeroBloqueVictima = this.cacheDatos[direccion.Item1 % 4][1];
                             int procesadorBloqueVictima = getNumeroProcesador(numeroBloqueVictima);
                             bool bloqueoDirecVictima = false;
 
@@ -247,14 +318,19 @@ namespace Arquitectura_CPU
 
                                     if (estadoBloqueVictima == 1)
                                     {
-                                        // actualiza el directorio poniendo cero
-                                        // poner I cache propia
+                                                                             
+                                        procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % 8][procesadorBloqueVictima] = 0;  // actualiza el directorio poniendo cero
+                                        this.cacheDatos[direccion.Item1 % 4][0] = 0;// poner I cache propia
                                     }
                                     else if (estadoBloqueVictima == 2)
                                     {
                                         // manda a guardar el bloque   
-                                        // actualizar directorio
-                                        // poner I cache propia
+                                        for (int i = 0; i < 4; i++)
+                                        {
+                                            memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % 4][i + 2];
+                                        }
+                                        procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % 8][procesadorBloqueVictima] = 0;  // actualiza el directorio poniendo cero
+                                        this.cacheDatos[direccion.Item1 % 4][0] = 0;// poner I cache propia
                                     }
                                 }
                                 else
@@ -292,11 +368,15 @@ namespace Arquitectura_CPU
                                         // U
                                         // lo jala de memoria, lo guarda en mi cache y modifica el directorio
                                         // actualiza
+                                        jalarBloqueDeMemoria(direccion, numProcBloque, contPrincipal.registro[regFuente]);
                                         break;
                                     case 1:
                                         // C
                                         // fijarse en directorio, invalidar todo si alguien lo tiene
                                         // lo jala de memoria, lo guarda en mi cache y modifica el directorio
+                                        invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false); 
+                                        //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
+                                        
                                         break;
                                     case 2:
                                         // M
@@ -304,6 +384,8 @@ namespace Arquitectura_CPU
                                         // guarda en memoria, actualiza directorio
                                         // jala el bloque a mi cache y lo modifica
                                         // invalidar en la otra caché
+                                        invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                        //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
                                         break;
                                 }
                                 #endregion
@@ -854,7 +936,7 @@ namespace Arquitectura_CPU
                     }
 
                 }
-                    
+                
                     
                 
                 #endregion

@@ -12,7 +12,7 @@ namespace Arquitectura_CPU
         public int cicloInicial, cicloFinal;
         public int[] registro;
         public int pc;
-
+        public bool loadLinkActivo;
         public Contexto(int pc, int id, int idProc)
         {
             registro = new int[33];
@@ -26,6 +26,7 @@ namespace Arquitectura_CPU
             this.id = id;
             this.idProc = idProc;
             this.cicloInicial = -1;
+            loadLinkActivo = false; 
         }
     }
 }
