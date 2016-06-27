@@ -381,6 +381,32 @@ namespace Arquitectura_CPU
                     * */
                     res = String.Format("LW R{0} {1}(R{2})", regFuente2, regDest, regFuente1);
                     break;
+                case 50:
+                    /* *
+                     * LL Rx, n(Ry)
+                     * Rx <- M(n + (Ry))
+                     * Rl <- n+(Ry)
+                     * codOp: 50 RF1: Y RF2 O RD: X RD O IMM: n
+                     * */
+                    res = String.Format("LL R{0} {1}(R{2})", regFuente2, regDest, regFuente1);
+                    break;
+                case 51:
+                    /* *
+                     * SC RX, n(rY)
+                     * IF (rl = N+(Ry)) => m(N+(RY)) = rX
+                     * ELSE Rx =0
+                     *  codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
+                     * */
+                    res = String.Format("SC R{0} {1}(R{2})", regFuente2, regDest, regFuente1);
+                    break;
+                case 43:
+                    /* *
+                     * SW RX, n(rY)
+                     * m(N+(RY)) = rX
+                     * codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
+                     * */
+                    res = String.Format("SW R{0} {1}(R{2})", regFuente2, regDest, regFuente1);
+                    break;
             }
             return res;
         }
@@ -391,7 +417,8 @@ namespace Arquitectura_CPU
             int codigoInstruccion = instruccion[0],
                 regFuente1 = instruccion[1],
                 regFuente2 = instruccion[2],
-                regDest = instruccion[3];
+                regDest = instruccion[3],
+                posMem = 0;
 
             Contexto contPrincipal = contextos.ElementAt(0);
 
@@ -484,6 +511,8 @@ namespace Arquitectura_CPU
                      * Rl <- n+(Ry)
                      * codOp: 50 RF1: Y RF2 O RD: X RD O IMM: n
                      * */
+                    posMem = contPrincipal.registro[regFuente1] + regDest;
+                    loadLink(regFuente2, posMem);
                     break;
                 case 51:
                     /* *
@@ -492,6 +521,8 @@ namespace Arquitectura_CPU
                      * ELSE Rx =0
                      *  codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
                      * */
+                    posMem = contPrincipal.registro[regFuente1] + regDest;
+                    storeConditional(posMem, regFuente2);
                     break; 
                 case 35:
                     /* *
@@ -500,7 +531,7 @@ namespace Arquitectura_CPU
                     * 
                     * codOp: 35 RF1: Y RF2 O RD: X RD O IMM: n
                     * */
-                    int posMem = contPrincipal.registro[regFuente1] + regDest;
+                    posMem = contPrincipal.registro[regFuente1] + regDest;
                     loadWord(regFuente2, posMem);
                     break;
                 case 43:
@@ -509,14 +540,15 @@ namespace Arquitectura_CPU
                      * m(N+(RY)) = rX
                      * codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
                      * */
+                    posMem = contPrincipal.registro[regFuente1] + regDest;
+                    storeWord(posMem, regFuente2);
                     break; 
-
             }
             return res;
         }
 
 
-        public void storeWord2(int posMem, int regFuente)
+        public void storeWord(int posMem, int regFuente)
         {
             bool bloqueoMiCache = false;
             bool bloqueoDirecCasa = false;
