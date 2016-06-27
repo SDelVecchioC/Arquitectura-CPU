@@ -714,7 +714,7 @@ namespace Arquitectura_CPU
             {
                 bool bloqueoMiCache = false;
                 var direccion = getPosicion(posMem);
-
+                
                 try
                 {
                     Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
@@ -1165,11 +1165,13 @@ namespace Arquitectura_CPU
                                     // bloqueo directorio victima
                                     if (procesadorBloqueVictima == this.id)
                                     {
-                                        quantum -= 2; //ciclos que gasta en consulta directorio local
+                                        estoyEnRetraso = true;
+                                        ciclosEnRetraso += 2; //ciclos que gasta en consulta directorio local
                                     }
                                     else
                                     {
-                                        quantum -= 4; //ciclos que gasta en consulta directorio remoto
+                                        estoyEnRetraso = true;
+                                        ciclosEnRetraso += 4; //ciclos que gasta en consulta directorio remoto
                                     }
                                     if (estadoBloqueVictima == 1)
                                     {
@@ -1190,7 +1192,8 @@ namespace Arquitectura_CPU
                                         {
                                             memoriaPrincipal[direccion.Item1][direccion.Item2][i] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1];
                                         }
-                                        quantum -= 16;
+                                        estoyEnRetraso = true;
+                                        ciclosEnRetraso += 16;
                                         this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO; //invalida la caché 
                                     }
                                 }
@@ -1223,11 +1226,13 @@ namespace Arquitectura_CPU
                                 // tengo directorio bloque que quiero leer
                                 if (numProcBloque == this.id)
                                 {
-                                    quantum -= 2; //ciclos que gasta en consulta directorio local
+                                    estoyEnRetraso = true;
+                                    ciclosEnRetraso += 2; // ciclos que gasta en consulta directorio local
                                 }
                                 else
                                 {
-                                    quantum -= 4; //ciclos que gasta en consulta directorio remoto
+                                    estoyEnRetraso = true;
+                                    ciclosEnRetraso += 4; // ciclos que gasta en consulta directorio remoto
                                 }
                                 int estadoBloque = procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO];
                                 // estados son U C M
@@ -1267,11 +1272,13 @@ namespace Arquitectura_CPU
                                 }
                                 if (numProcBloque == this.id)
                                 {
-                                    quantum -= 16; //ciclos que gasta en cargar de memoria local
+                                    estoyEnRetraso = true;
+                                    ciclosEnRetraso += 16; //ciclos que gasta en cargar de memoria local
                                 }
                                 else
                                 {
-                                    quantum -= 32; //ciclos que gasta en cargar de memoria remoto
+                                    estoyEnRetraso = true;
+                                    ciclosEnRetraso += 32; //ciclos que gasta en cargar de memoria remoto
                                 }
                                 procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][this.id] = ESTADO_COMPARTIDO; //pone en c en el directorio.
                                 //pone en C en el directorio y en la cache
@@ -1280,6 +1287,7 @@ namespace Arquitectura_CPU
                                 contPrincipal.registro[regFuente2] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2];
                                 contPrincipal.registro[32] = posMem; //Actualiza el valor de RL 
                                 contPrincipal.loadLinkActivo = true;
+                                //pone bandera de loadLinkActivo en true
 
                             }
                             else
@@ -1315,6 +1323,7 @@ namespace Arquitectura_CPU
                 }
             }
         }
+
 
         public void Iniciar()
         {
