@@ -114,7 +114,6 @@ namespace Arquitectura_CPU
                 console.WriteLine(String.Format("Ciclo Inicial: {0}. Ciclo Final: {1}. Total de ciclos: {2}", contexto.cicloInicial, contexto.cicloFinal, contexto.cicloFinal - contexto.cicloInicial));
                 for (int i = 0; i < contexto.registro.Length; i++)
                 {
-
                     console.Write(String.Format("R{0}: {1} ", i.ToString("D2"), contexto.registro[i].ToString("D5")));
                     if (i % 4 == 3)
                     {
@@ -123,7 +122,16 @@ namespace Arquitectura_CPU
                 }
                 console.WriteLine("");
             }
-
+            console.WriteLine("Memoria Compartida");
+            for(int i = 0; i < 8; i++)
+            {
+                console.WriteLine(String.Format("Bloque #{0}", i));
+                for (int j = 0; j < 4; j++)
+                {
+                    console.Write(String.Format("{0} ", p.memoriaPrincipal[i][j]));
+                }
+                console.WriteLine("");
+            }
         }
 
     }
