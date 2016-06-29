@@ -99,6 +99,11 @@ namespace Arquitectura_CPU
             {
                 imprimirResultados(procesadores.ElementAt(i), console);
             }
+            console.WriteLine("Memoria Compartida");
+            for (int i = 0; i < cantProcesadores; i++)
+            {
+                imprimirMemoC(procesadores.ElementAt(i), console);
+            }
 
             console.WriteLine(String.Format("Puede consultar la salida de este programa en el archivo {0}", console.Guardar()));
             console.Guardar();
@@ -122,13 +127,15 @@ namespace Arquitectura_CPU
                 }
                 console.WriteLine("");
             }
-            console.WriteLine("Memoria Compartida");
-            for(int i = 0; i < 8; i++)
+        }
+        private static void imprimirMemoC(Procesador p, Consola console)
+        { 
+            for (int i = 0; i < 8; i++)
             {
-                console.WriteLine(String.Format("Bloque #{0}", i));
+                console.WriteLine(String.Format("Bloque #{0}", i+(p.id*8)));
                 for (int j = 0; j < 4; j++)
                 {
-                    console.Write(String.Format("{0} ", p.memoriaPrincipal[i][j]));
+                    console.Write(String.Format("{0} ", p.memoriaPrincipal[i][j][0]));
                 }
                 console.WriteLine("");
             }

@@ -71,9 +71,6 @@ C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectu
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\1.txt
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\2.txt
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\4.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\5.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\6.txt
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.pdb
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache

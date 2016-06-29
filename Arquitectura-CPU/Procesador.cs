@@ -297,7 +297,7 @@ namespace Arquitectura_CPU
                 regFuente1 = instruccion[1],
                 regFuente2 = instruccion[2],
                 regDest = instruccion[3];
-            string res = "";
+            string res = "abc";
             Contexto contPrincipal = contextos.ElementAt(0);
 
             switch (codigoInstruccion)
@@ -1146,7 +1146,8 @@ namespace Arquitectura_CPU
                 // Need to sync here
                 sync.SignalAndWait();
 
-                console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
+                /// todo
+                // console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
 
                 if (!estoyEnRetraso)
                 {
