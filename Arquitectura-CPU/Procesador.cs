@@ -548,8 +548,9 @@ namespace Arquitectura_CPU
         }
 
 
-        public void storeWord(int posMem, int regFuente)
+        public bool storeWord(int posMem, int regFuente)
         {
+            bool res = false;
             bool bloqueoMiCache = false;
             bool bloqueoDirecCasa = false;
             bool bloqueoDirecVictima = false;
@@ -595,6 +596,7 @@ namespace Arquitectura_CPU
                                     // me devuelvo a lo mio y modifico
                                     // actualizo el directorio
                                     invalidarEnOtrasCaches(direccion, numProc, contPrincipal.registro[regFuente], true);
+                                    res = true;
                                 }
                                 else
                                 {
@@ -608,6 +610,7 @@ namespace Arquitectura_CPU
                                 // escribe
                                 // memoriaPrincipal[direccion.Item1][direccion.Item2][0]
                                 this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente]; // no estoy segura que esa sea la pos de mem
+                                res = true;
                                 break;
                         }
                         #endregion
@@ -690,6 +693,7 @@ namespace Arquitectura_CPU
                                         //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
                                         break;
                                 }
+                                res = true;
                                 #endregion
                             }
                             else
@@ -717,23 +721,7 @@ namespace Arquitectura_CPU
                 if (bloqueoDirecBloque)
                     Monitor.Exit(objDirecBloque);
             }
-        }
-
-        public void storeConditional(int posMem, int regFuente)
-        {
-            Contexto contPrincipal = contextos.ElementAt(0);
-            if (contPrincipal.registro[32] == posMem)
-            {
-                storeWord(posMem, regFuente);
-            }
-            else
-            {
-                //El RL no es igual a posMem
-                contPrincipal.registro[regFuente] = 0;
-
-            }
-
-            contPrincipal.loadLinkActivo = false; 
+            return res;
         }
 
         private int getNumeroProcesador(int bloque) 
@@ -941,13 +929,49 @@ namespace Arquitectura_CPU
 
         public void loadLink(int regFuente2, int posMem)
         {
-            if(loadWord(regFuente2, posMem))
-            {
-                Contexto contPrincipal = contextos.ElementAt(0);
-                contPrincipal.registro[32] = posMem; //Actualiza el valor de RL 
+            Contexto contPrincipal = contextos.ElementAt(0);
+            if (!contPrincipal.loadLinkActivo && loadWord(regFuente2, posMem))
+            {  
+                contPrincipal.registro[32] = posMem; // Actualiza el valor de RL 
                 contPrincipal.loadLinkActivo = true;
-                //pone bandera de loadLinkActivo en true
+                // pone bandera de loadLinkActivo en true
             }
+        }
+
+        public void storeConditional(int posMem, int regFuente)
+        {
+
+            Contexto contPrincipal = contextos.ElementAt(0);
+
+            if (contPrincipal.registro[32] == posMem)
+            {
+                if(storeWord(posMem, regFuente))
+                {
+                    foreach(var p in procesadores)
+                    {
+                        foreach(var c in p.contextos)
+                        {
+                            if(p.id != this.id && c.loadLinkActivo)
+                            {
+                                var dir = getPosicion(c.registro[32]).Item1;
+                                var miDir = getPosicion(contPrincipal.registro[32]).Item1;
+                                if(dir == miDir)
+                                {
+                                    c.loadLinkActivo = false;
+                                    c.registro[32] = -1;
+                                }
+                            }
+                        }
+                    }
+                    contPrincipal.registro[regFuente] = 1;
+                }
+                else 
+                {
+                    contPrincipal.registro[regFuente] = 0;
+                }
+
+                contPrincipal.loadLinkActivo = false;
+            }  
         }
 
 
