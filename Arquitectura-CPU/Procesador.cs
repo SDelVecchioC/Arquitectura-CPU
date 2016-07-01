@@ -207,90 +207,6 @@ namespace Arquitectura_CPU
             contextos.ElementAt(0).cicloInicial = 1;
         }
 
-
-        public bool bloqueEnMiCache(Tuple<int, int> direccion)
-        {
-            return blockMapDatos[direccion.Item1 % CACHDAT_FILAS] == direccion.Item1;
-        }
-
-        public int getNumDirectorio(int posMem)
-        {
-            int numDirectorio = -1;
-            numDirectorio = (int)posMem / DIRECT_FILAS;
-            return numDirectorio; 
-        }
-
-
-        public void invalidarEnOtrasCaches(Tuple<int, int> direccion, int numProc, int valRegFuente, bool hit)
-        {
-            int i = 0;
-            bool bloqueoTodasLasCaches = true;
-            for (i = 0; i < 3 && bloqueoTodasLasCaches; i++) // valido la bandera aca de una vez
-            {
-                if(i != id) // solo invalida trata de bloquear las otras caches
-                {
-                    if (procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][i] == ESTADO_COMPARTIDO) // si está en uno es xq esa cache lo tiene C
-                    {
-                        procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][i] = ESTADO_INVALIDO; // invalida en el directorio 
-                        bool bloqueoCacheActual = false;
-                        try
-                        {
-                            Monitor.TryEnter(procesadores.ElementAt(i).cacheDatos, ref bloqueoCacheActual);
-                            if (bloqueoCacheActual)
-                            {
-                                procesadores.ElementAt(i).cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO; // invalida en la caché
-                            }
-                            else
-                            {
-                                bloqueoTodasLasCaches = false;
-                                //Libera todo y vuelve a empezar 
-                            }
-                        }
-                        finally
-                        {
-                            if (bloqueoCacheActual)
-                            {
-                                Monitor.Exit(procesadores.ElementAt(i).cacheDatos);
-                            }
-                        }
-                    }
-                }
-            }
- 
-            if (bloqueoTodasLasCaches)
-            {
-                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO; // pone estado en Modificado en el directorio
-                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][id + 1] = 1; // indica que en el procesador numero id tiene al bloque modificado 
-                if (hit)
-                {
-                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO; // modifica el estado del bloque en la cache
-                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = valRegFuente;
-                }
-                else
-                {
-                    jalarBloqueDeMemoria(direccion, numProc, valRegFuente);
-                }
-               
-            }
-        }
-
-        public void jalarBloqueDeMemoria(Tuple<int, int> direccion, int numProcBloque, int valRegFuente)
-        {
-            int bloke = direccion.Item1 % CACHDAT_FILAS;
-            this.cacheDatos[bloke][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO; // lo pone en la cache como modificado  
-            this.blockMapDatos[bloke] = direccion.Item1; // pone la etiqueta del bloque 
-
-            for (int i = 0; i < 4; i++)
-            {
-                this.cacheDatos[bloke][i + 1] = memoriaPrincipal[direccion.Item1][i][0];
-            }
-
-            this.cacheDatos[bloke][direccion.Item2 + 1] = valRegFuente;
-
-            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO; // lo pone modificado en el directorio 
-            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][id + 1] = 1; // indica la cache del procesador en el que esta modificado 
-        }
-        
         public string getStringInstruccion(int[] instruccion)
         {
             int codigoInstruccion = instruccion[0],
@@ -523,7 +439,7 @@ namespace Arquitectura_CPU
                      * */
                     posMem = contPrincipal.registro[regFuente1] + regDest;
                     storeConditional(posMem, regFuente2);
-                    break; 
+                    break;
                 case 35:
                     /* *
                     * LW Rx, n(Ry)
@@ -542,12 +458,94 @@ namespace Arquitectura_CPU
                      * */
                     posMem = contPrincipal.registro[regFuente1] + regDest;
                     storeWord(posMem, regFuente2);
-                    break; 
+                    break;
             }
             return res;
         }
 
+        public bool bloqueEnMiCache(Tuple<int, int> direccion)
+        {
+            return blockMapDatos[direccion.Item1 % CACHDAT_FILAS] == direccion.Item1;
+        }
 
+        public int getNumDirectorio(int posMem)
+        {
+            int numDirectorio = -1;
+            numDirectorio = (int)posMem / DIRECT_FILAS;
+            return numDirectorio; 
+        }
+
+
+        public void invalidarEnOtrasCaches(Tuple<int, int> direccion, int numProc, int valRegFuente, bool hit)
+        {
+            int i = 0;
+            bool bloqueoTodasLasCaches = true;
+            for (i = 0; i < 3 && bloqueoTodasLasCaches; i++) // valido la bandera aca de una vez
+            {
+                if(i != id) // solo invalida trata de bloquear las otras caches
+                {
+                    if (procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][i] == ESTADO_COMPARTIDO) // si está en uno es xq esa cache lo tiene C
+                    {
+                        procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][i] = ESTADO_INVALIDO; // invalida en el directorio 
+                        bool bloqueoCacheActual = false;
+                        try
+                        {
+                            Monitor.TryEnter(procesadores.ElementAt(i).cacheDatos, ref bloqueoCacheActual);
+                            if (bloqueoCacheActual)
+                            {
+                                procesadores.ElementAt(i).cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO; // invalida en la caché
+                            }
+                            else
+                            {
+                                bloqueoTodasLasCaches = false;
+                                //Libera todo y vuelve a empezar 
+                            }
+                        }
+                        finally
+                        {
+                            if (bloqueoCacheActual)
+                            {
+                                Monitor.Exit(procesadores.ElementAt(i).cacheDatos);
+                            }
+                        }
+                    }
+                }
+            }
+ 
+            if (bloqueoTodasLasCaches)
+            {
+                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO; // pone estado en Modificado en el directorio
+                procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][id + 1] = 1; // indica que en el procesador numero id tiene al bloque modificado 
+                if (hit)
+                {
+                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO; // modifica el estado del bloque en la cache
+                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = valRegFuente;
+                }
+                else
+                {
+                    jalarBloqueDeMemoria(direccion, numProc, valRegFuente);
+                }
+               
+            }
+        }
+
+        public void jalarBloqueDeMemoria(Tuple<int, int> direccion, int numProcBloque, int valRegFuente)
+        {
+            int bloke = direccion.Item1 % CACHDAT_FILAS;
+            this.cacheDatos[bloke][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO; // lo pone en la cache como modificado  
+            this.blockMapDatos[bloke] = direccion.Item1; // pone la etiqueta del bloque 
+
+            for (int i = 0; i < 4; i++)
+            {
+                this.cacheDatos[bloke][i + 1] = memoriaPrincipal[direccion.Item1][i][0];
+            }
+
+            this.cacheDatos[bloke][direccion.Item2 + 1] = valRegFuente;
+
+            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO; // lo pone modificado en el directorio 
+            procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][id + 1] = 1; // indica la cache del procesador en el que esta modificado 
+        }
+        
         public void storeWord(int posMem, int regFuente)
         {
             bool bloqueoMiCache = false;
@@ -594,7 +592,12 @@ namespace Arquitectura_CPU
                                     // si hay, bloqueo caches e invalido
                                     // me devuelvo a lo mio y modifico
                                     // actualizo el directorio
-                                    invalidarEnOtrasCaches(direccion, numProc, contPrincipal.registro[regFuente], true);
+                                    bool res = invalidarEnOtrasCaches(direccion, numProc, contPrincipal.registro[regFuente], true);
+                                    if(!res)
+                                    {
+                                        //libero 
+                                        contPrincipal.pc -= 4;
+                                    }
                                 }
                                 else
                                 {
@@ -676,9 +679,12 @@ namespace Arquitectura_CPU
                                         // C
                                         // fijarse en directorio, invalidar todo si alguien lo tiene
                                         // lo jala de memoria, lo guarda en mi cache y modifica el directorio
-                                        invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                        bool resC = invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                        if(!resC)
+                                        {
+                                            contPrincipal.pc -= 4;
+                                        }
                                         //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
-
                                         break;
                                     case ESTADO_MODIFICADO:
                                         // M
@@ -686,7 +692,11 @@ namespace Arquitectura_CPU
                                         // guarda en memoria, actualiza directorio
                                         // jala el bloque a mi cache y lo modifica
                                         // invalidar en la otra caché
-                                        invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                        bool resM = invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                        if (!resM)
+                                        {
+                                            contPrincipal.pc -= 4;
+                                        }
                                         //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
                                         break;
                                 }
@@ -761,8 +771,11 @@ namespace Arquitectura_CPU
                                             // me devuelvo a lo mio y modifico
                                             // actualizo el directorio
                                             #region invalidaEnCaches
-                                            invalidarEnOtrasCaches(direccion, numProc, contPrincipal.registro[regFuente], true);
-
+                                            bool res = invalidarEnOtrasCaches(direccion, numProc, contPrincipal.registro[regFuente], true);
+                                            if(!res)
+                                            {
+                                                contPrincipal.pc -= 4;
+                                            }
                                             #endregion
                                         }
                                         else
@@ -870,7 +883,11 @@ namespace Arquitectura_CPU
                                             // C
                                             // fijarse en directorio, invalidar todo si alguien lo tiene
                                             // lo jala de memoria, lo guarda en mi cache y modifica el directorio
-                                            invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                            bool resC = invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                            if (!resC)
+                                            {
+                                                contPrincipal.pc -= 4;
+                                            }
                                             //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
 
                                             break;
@@ -880,7 +897,11 @@ namespace Arquitectura_CPU
                                             // guarda en memoria, actualiza directorio
                                             // jala el bloque a mi cache y lo modifica
                                             // invalidar en la otra caché
-                                            invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                            bool resM = invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                            if (!resM)
+                                            {
+                                                contPrincipal.pc -= 4;
+                                            }
                                             //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
                                             break;
                                     }
@@ -889,6 +910,7 @@ namespace Arquitectura_CPU
                                 else
                                 {
                                     // libera
+                                    contPrincipal.pc -= 4;
                                 }
                             }
                             finally
@@ -902,6 +924,7 @@ namespace Arquitectura_CPU
                     else
                     {
                         // Termina ciclo, vuelve a empezar 
+                        contPrincipal.pc -= 4;
                     }
                 }
                 finally
