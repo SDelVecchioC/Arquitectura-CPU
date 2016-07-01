@@ -724,6 +724,8 @@ namespace Arquitectura_CPU
             bool bloqueoDirecCasa = false;
             bool bloqueoDirecVictima = false;
             bool bloqueoDirecBloque = false;
+
+            // en caso que no se logre lock de directorio bloque victima no deja pasar
             bool puedeContinuarDesdeBloqueVictima = true;
 
             object objMiCache = null;
@@ -743,7 +745,6 @@ namespace Arquitectura_CPU
                     Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
                     if (bloqueoMiCache)
                     {
-                        #region bloqueoMiCache
                         // Esto es de SC, invalida todos los otros LL
                         foreach (var p in procesadores)
                         {
@@ -759,6 +760,7 @@ namespace Arquitectura_CPU
                             }
                         }
 
+                        #region bloqueoMiCache
                         objMiCache = this.cacheDatos;
                         var direccion = getPosicion(posMem);
 
@@ -799,8 +801,6 @@ namespace Arquitectura_CPU
                                 #endregion
                                 case ESTADO_MODIFICADO:
                                     // si el bloque esta M 
-                                    // escribe
-                                    // memoriaPrincipal[direccion.Item1][direccion.Item2][0]
                                     this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente]; // no estoy segura que esa sea la pos de mem
                                     break;
                             }
@@ -833,7 +833,7 @@ namespace Arquitectura_CPU
                                         // manda a guardar el bloque   
                                         for (int i = 0; i < 4; i++)
                                         {
-                                            memoriaPrincipal[direccion.Item1][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1];
+                                            procesadores.ElementAt(procesadorBloqueVictima).memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i];
                                         }
                                         procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % CACHDAT_FILAS][procesadorBloqueVictima] = ESTADO_UNCACHED;  // actualiza el directorio poniendo cero
                                         this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_INVALIDO;// poner I cache propia
@@ -898,9 +898,13 @@ namespace Arquitectura_CPU
                                 }
                             }
                             #endregion
+
+                            else
+                            {
+                                contPrincipal.pc -= 4;
+                            }
                         }
                         #endregion
-
                     }
                     else
                     {
@@ -917,7 +921,6 @@ namespace Arquitectura_CPU
                         Monitor.Exit(objDirecVictima);
                     if (bloqueoDirecBloque)
                         Monitor.Exit(objDirecBloque);
-
                     // Esto es de SC
                     contPrincipal.registro[regFuente] = 1;
                 }
@@ -1020,7 +1023,7 @@ namespace Arquitectura_CPU
                                     // poner I cache propia
                                     for (int i = 0; i < 4; i++)
                                     {
-                                        procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] =procesadorBloqueVictima.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i];
+                                        procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = procesadorBloqueVictima.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i];
                                     }
                                     estoyEnRetraso = true;
                                     ciclosEnRetraso += 16;
@@ -1060,18 +1063,18 @@ namespace Arquitectura_CPU
                                     ciclosEnRetraso += 4; // ciclos que gasta en consulta directorio remoto
                                 }
                                 int estadoBloque = proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO];
-                                if(estadoBloque == ESTADO_MODIFICADO)
+                                if (estadoBloque == ESTADO_MODIFICADO)
                                 {
                                     Procesador procQueLoTieneM = null;
-                                    for(int i = 0; i < 3; i++)
+                                    for (int i = 0; i < 3; i++)
                                     {
-                                        if(proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][i+1] == 1)
+                                        if (proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][i + 1] == 1)
                                         {
                                             procQueLoTieneM = procesadores.ElementAt(i);
                                         }
                                     }
                                     Monitor.TryEnter(procQueLoTieneM.cacheDatos, ref bloqueoCacheBloque);
-                                    if(bloqueoCacheBloque)
+                                    if (bloqueoCacheBloque)
                                     {
                                         objCacheBloque = procQueLoTieneM.cacheDatos;
                                         for (int i = 0; i < 4; i++)
@@ -1087,7 +1090,7 @@ namespace Arquitectura_CPU
                                         resultado = false;
                                     }
                                 }
-                                if(bloqueoCacheBloque) // se asegura que no hizo fail de try lock mas arriba
+                                if (bloqueoCacheBloque) // se asegura que no hizo fail de try lock mas arriba
                                 {
                                     for (int i = 0; i < 4; i++)
                                     {
@@ -1096,7 +1099,7 @@ namespace Arquitectura_CPU
                                     this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
                                     proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
                                     contPrincipal.registro[regFuente2] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2];
-                                }          
+                                }
                                 #endregion
                             }
                             else
