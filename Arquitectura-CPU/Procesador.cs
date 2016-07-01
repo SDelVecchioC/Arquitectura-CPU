@@ -14,7 +14,7 @@ namespace Arquitectura_CPU
 
         public const int CACHDAT_FILAS = 4;
         public const int CACHDAT_COLUMNAS = 5;
-        public const int CACHDAT_COL_ESTADO = 0;
+        public const int CACHDAT_COL_ESTADO = 4;
 
         public const int ESTADO_INVALIDO = 0;
         public const int ESTADO_COMPARTIDO = 1;
@@ -529,10 +529,10 @@ namespace Arquitectura_CPU
 
             for (int i = 0; i < 4; i++)
             {
-                this.cacheDatos[bloke][i + 1] = procesadores.ElementAt(numProcBloque).memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0];
+                this.cacheDatos[bloke][i] = procesadores.ElementAt(numProcBloque).memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0];
             }
 
-            this.cacheDatos[bloke][direccion.Item2 + 1] = valRegFuente;
+            this.cacheDatos[bloke][direccion.Item2] = valRegFuente;
 
             procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO; // lo pone modificado en el directorio 
             procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][id + 1] = 1; // indica la cache del procesador en el que esta modificado 
@@ -632,7 +632,7 @@ namespace Arquitectura_CPU
                                     // manda a guardar el bloque   
                                     for (int i = 0; i < 4; i++)
                                     {
-                                        procesadores.ElementAt(procesadorBloqueVictima).memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1];
+                                        procesadores.ElementAt(procesadorBloqueVictima).memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i];
                                     }
                                     procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % CACHDAT_FILAS][procesadorBloqueVictima] = ESTADO_UNCACHED;  // actualiza el directorio poniendo cero
                                     this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_INVALIDO;// poner I cache propia
@@ -839,7 +839,7 @@ namespace Arquitectura_CPU
                                     // poner I cache propia
                                     for (int i = 0; i < 4; i++)
                                     {
-                                        procesadores.ElementAt(procesadorBloqueVictima).memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1];
+                                        procesadores.ElementAt(procesadorBloqueVictima).memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i];
                                     }
                                     estoyEnRetraso = true;
                                     ciclosEnRetraso += 16;
@@ -894,7 +894,7 @@ namespace Arquitectura_CPU
                                         // 
                                         for (int i = 0; i < 4; i++)
                                         {
-                                            procesadores.ElementAt(numProcBloque).memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1]; //??
+                                            procesadores.ElementAt(numProcBloque).memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i]; //??
                                         }
                                         // guarda en memoria, actualiza directorio
                                         // 
@@ -907,7 +907,7 @@ namespace Arquitectura_CPU
                                 this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_COMPARTIDO; //pone en c en la cache 
                                 for (int i = 0; i < 4; i++)
                                 {
-                                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1] = procesadores.ElementAt(numProcBloque).memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0];
+                                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i] = procesadores.ElementAt(numProcBloque).memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0];
                                 }
                                 if (numProcBloque == this.id)
                                 {
