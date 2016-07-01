@@ -26,7 +26,7 @@ namespace Arquitectura_CPU
 
         public const int ESTADO_UNCACHED = 0;
         #endregion
-        
+
         // estructuras de datos del procesador
         public int[][][] cacheInstrucciones;
         public int[][][] memoriaPrincipal;
@@ -55,7 +55,7 @@ namespace Arquitectura_CPU
         private Consola console;
 
         public List<Procesador> procesadores { get; set; }
-        
+
 
         public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c, int recievedQuantum)
         {
@@ -92,9 +92,9 @@ namespace Arquitectura_CPU
                 {
                     if (k == DIRECT_COL_ESTADO)
                     {
-                        directorio[j][k] = ESTADO_UNCACHED; 
+                        directorio[j][k] = ESTADO_UNCACHED;
                     }
-                    else 
+                    else
                     {
                         directorio[j][k] = -1;
                     }
@@ -109,7 +109,7 @@ namespace Arquitectura_CPU
                 blockMapDatos[j] = -1;
                 cacheDatos[j] = new int[CACHDAT_COLUMNAS];
                 for (int k = 0; k < CACHDAT_COLUMNAS; k++)
-                {  
+                {
                     if (k == CACHDAT_COL_ESTADO)
                     {
                         cacheDatos[j][k] = ESTADO_INVALIDO;
@@ -129,11 +129,11 @@ namespace Arquitectura_CPU
                 for (int j = 0; j < 4; j++)
                 {
                     memoriaPrincipal[i][j] = new int[4];
-                    for(int k = 0; k < 4; k++)
+                    for (int k = 0; k < 4; k++)
                     {
                         memoriaPrincipal[i][j][k] = 1;
                     }
-                    
+
                 }
             }
             //parte no compartida 
@@ -472,7 +472,7 @@ namespace Arquitectura_CPU
         {
             int numDirectorio = -1;
             numDirectorio = (int)posMem / DIRECT_FILAS;
-            return numDirectorio; 
+            return numDirectorio;
         }
 
 
@@ -482,7 +482,7 @@ namespace Arquitectura_CPU
             bool bloqueoTodasLasCaches = true;
             for (i = 0; i < 3 && bloqueoTodasLasCaches; i++) // valido la bandera aca de una vez
             {
-                if(i != id) // solo invalida trata de bloquear las otras caches
+                if (i != id) // solo invalida trata de bloquear las otras caches
                 {
                     if (procesadores.ElementAt(numProc).directorio[direccion.Item1 % DIRECT_FILAS][i + 1] == ESTADO_COMPARTIDO) // si está en uno es xq esa cache lo tiene C
                     {
@@ -511,7 +511,7 @@ namespace Arquitectura_CPU
                     }
                 }
             }
- 
+
             if (bloqueoTodasLasCaches)
             {
                 procesadores.ElementAt(numProc).directorio[(direccion.Item1) % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO; // pone estado en Modificado en el directorio
@@ -545,7 +545,7 @@ namespace Arquitectura_CPU
             procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO; // lo pone modificado en el directorio 
             procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][id + 1] = 1; // indica la cache del procesador en el que esta modificado 
         }
-        
+
         public void storeWord(int posMem, int regFuente)
         {
             bool bloqueoMiCache = false;
@@ -565,7 +565,7 @@ namespace Arquitectura_CPU
                 Contexto contPrincipal = contextos.ElementAt(0);
 
                 Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
-                if(bloqueoMiCache)
+                if (bloqueoMiCache)
                 {
                     #region bloqueoMiCache
                     objMiCache = this.cacheDatos;
@@ -593,7 +593,7 @@ namespace Arquitectura_CPU
                                     // me devuelvo a lo mio y modifico
                                     // actualizo el directorio
                                     bool res = invalidarEnOtrasCaches(direccion, numProc, contPrincipal.registro[regFuente], true);
-                                    if(!res)
+                                    if (!res)
                                     {
                                         //libero 
                                         contPrincipal.pc -= 4;
@@ -655,7 +655,7 @@ namespace Arquitectura_CPU
                                 puedeContinuarDesdeBloqueVictima = false;
                             }
                         }
-                        if(puedeContinuarDesdeBloqueVictima)
+                        if (puedeContinuarDesdeBloqueVictima)
                         {
                             int numProcBloque = getNumeroProcesador(direccion.Item1);
                             Monitor.TryEnter(procesadores.ElementAt(numProcBloque).directorio, ref bloqueoDirecBloque);
@@ -679,7 +679,7 @@ namespace Arquitectura_CPU
                                         // fijarse en directorio, invalidar todo si alguien lo tiene
                                         // lo jala de memoria, lo guarda en mi cache y modifica el directorio
                                         bool resC = invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
-                                        if(!resC)
+                                        if (!resC)
                                         {
                                             contPrincipal.pc -= 4;
                                         }
@@ -730,40 +730,218 @@ namespace Arquitectura_CPU
 
         public void storeConditional(int posMem, int regFuente)
         {
-            /*Contexto contPrincipal = contextos.ElementAt(0);
+            bool bloqueoMiCache = false;
+            bool bloqueoDirecCasa = false;
+            bool bloqueoDirecVictima = false;
+            bool bloqueoDirecBloque = false;
+            bool puedeContinuarDesdeBloqueVictima = true;
 
-            if (contPrincipal.registro[32] == posMem)
+            object objMiCache = null;
+            object objDirecCasa = null;
+            object objDirecVictima = null;
+            object objDirecBloque = null;
+
+
+            Contexto contPrincipal = contextos.ElementAt(0);
+
+            // Esto es de SC
+            if (contPrincipal.registro[32] == posMem && contPrincipal.loadLinkActivo == true)
             {
-                if (storeWord(posMem, regFuente))
+                #region Si el LoadLinked está en todas
+                try
                 {
-                    foreach (var p in procesadores)
+                    Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
+                    if (bloqueoMiCache)
                     {
-                        foreach (var c in p.contextos)
+                        #region bloqueoMiCache
+                        // Esto es de SC, invalida todos los otros LL
+                        foreach (var p in procesadores)
                         {
-                            if (p.id != this.id && c.loadLinkActivo)
+                            foreach (var c in p.contextos)
                             {
-                                var dir = getPosicion(c.registro[32]).Item1;
-                                var miDir = getPosicion(contPrincipal.registro[32]).Item1;
-                                if (dir == miDir)
+                                if (p.id != this.id && c.loadLinkActivo)
                                 {
-                                    c.loadLinkActivo = false;
-                                    c.registro[32] = -1;
+                                    if (c.bloque_linked == contPrincipal.bloque_linked)
+                                    {
+                                        c.registro[32] = -1;
+                                    }
                                 }
                             }
                         }
+
+                        objMiCache = this.cacheDatos;
+                        var direccion = getPosicion(posMem);
+
+                        if (bloqueEnMiCache(direccion))
+                        {
+                            #region hitMiCache
+                            int estadoMiBloque = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
+                            // pregunta por el estado
+                            switch (estadoMiBloque)
+                            {
+                                case ESTADO_COMPARTIDO:
+                                    #region Compartido
+                                    // el bloque esta C 
+                                    // pide directorio casa del bloque que esta C
+
+                                    int numProc = getNumeroProcesador(direccion.Item1);
+                                    Monitor.TryEnter(procesadores.ElementAt(numProc).directorio, ref bloqueoDirecCasa);
+                                    if (bloqueoDirecCasa)
+                                    {
+                                        objDirecCasa = procesadores.ElementAt(numProc).directorio;
+                                        // busco cuales otros lo tienen en C 
+                                        // si hay, bloqueo caches e invalido
+                                        // me devuelvo a lo mio y modifico
+                                        // actualizo el directorio
+                                        bool res = invalidarEnOtrasCaches(direccion, numProc, contPrincipal.registro[regFuente], true);
+                                        if (!res)
+                                        {
+                                            //libero 
+                                            contPrincipal.pc -= 4;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        //libero 
+                                        contPrincipal.pc -= 4;
+                                    }
+                                    break;
+                                #endregion
+                                case ESTADO_MODIFICADO:
+                                    // si el bloque esta M 
+                                    // escribe
+                                    // memoriaPrincipal[direccion.Item1][direccion.Item2][0]
+                                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente]; // no estoy segura que esa sea la pos de mem
+                                    break;
+                            }
+                            #endregion
+                        }
+                        else
+                        {
+                            #region missMiCache
+                            int estadoBloqueVictima = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
+
+                            if (estadoBloqueVictima == ESTADO_COMPARTIDO || estadoBloqueVictima == ESTADO_MODIFICADO)
+                            {
+                                // pide directorio de bloque victima 
+                                // lo bloquea 
+                                int numeroBloqueVictima = this.blockMapDatos[direccion.Item1 % CACHDAT_FILAS];
+                                int procesadorBloqueVictima = getNumeroProcesador(numeroBloqueVictima);
+
+                                Monitor.TryEnter(procesadores.ElementAt(procesadorBloqueVictima).directorio, ref bloqueoDirecVictima);
+                                if (bloqueoDirecVictima)
+                                {
+                                    #region bloqueoDirecVictima
+                                    objDirecVictima = procesadores.ElementAt(procesadorBloqueVictima).directorio;
+                                    if (estadoBloqueVictima == ESTADO_COMPARTIDO)
+                                    {
+                                        procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % DIRECT_FILAS][procesadorBloqueVictima] = ESTADO_UNCACHED;  // actualiza el directorio poniendo cero
+                                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;// poner I cache propia
+                                    }
+                                    else if (estadoBloqueVictima == ESTADO_MODIFICADO)
+                                    {
+                                        // manda a guardar el bloque   
+                                        for (int i = 0; i < 4; i++)
+                                        {
+                                            memoriaPrincipal[direccion.Item1][i][0] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i + 1];
+                                        }
+                                        procesadores.ElementAt(procesadorBloqueVictima).directorio[direccion.Item1 % CACHDAT_FILAS][procesadorBloqueVictima] = ESTADO_UNCACHED;  // actualiza el directorio poniendo cero
+                                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_INVALIDO;// poner I cache propia
+                                    }
+                                    #endregion
+                                }
+                                else
+                                {
+                                    contPrincipal.pc -= 4;
+                                    puedeContinuarDesdeBloqueVictima = false;
+                                }
+                            }
+                            if (puedeContinuarDesdeBloqueVictima)
+                            {
+                                int numProcBloque = getNumeroProcesador(direccion.Item1);
+                                Monitor.TryEnter(procesadores.ElementAt(numProcBloque).directorio, ref bloqueoDirecBloque);
+                                if (bloqueoDirecBloque)
+                                {
+                                    #region bloqueoDirecBloque
+                                    objDirecBloque = procesadores.ElementAt(numProcBloque).directorio;
+                                    // tengo directorio bloque que quiero leer
+                                    int estadoBloque = procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO];
+                                    // estados son U C M
+                                    switch (estadoBloque)
+                                    {
+                                        case ESTADO_UNCACHED:
+                                            // U
+                                            // lo jala de memoria, lo guarda en mi cache y modifica el directorio
+                                            // actualiza
+                                            jalarBloqueDeMemoria(direccion, numProcBloque, contPrincipal.registro[regFuente]);
+                                            break;
+                                        case ESTADO_COMPARTIDO:
+                                            // C
+                                            // fijarse en directorio, invalidar todo si alguien lo tiene
+                                            // lo jala de memoria, lo guarda en mi cache y modifica el directorio
+                                            bool resC = invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                            if (!resC)
+                                            {
+                                                contPrincipal.pc -= 4;
+                                            }
+                                            //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
+                                            break;
+                                        case ESTADO_MODIFICADO:
+                                            // M
+                                            // bloquea cache de donde esta
+                                            // guarda en memoria, actualiza directorio
+                                            // jala el bloque a mi cache y lo modifica
+                                            // invalidar en la otra caché
+                                            bool resM = invalidarEnOtrasCaches(direccion, numProcBloque, contPrincipal.registro[regFuente], false);
+                                            if (!resM)
+                                            {
+                                                contPrincipal.pc -= 4;
+                                            }
+                                            //el metodo invalidarEnOtrasCaches llama a jalarBloqueDeMemoria q se encarga de jalar el bloque, modificar la cache y directorio
+                                            break;
+                                    }
+                                    #endregion
+                                }
+                                else
+                                {
+                                    contPrincipal.pc -= 4;
+                                }
+                            }
+                            #endregion
+                        }
+                        #endregion
+
                     }
+                    else
+                    {
+                        contPrincipal.pc -= 4;
+                    }
+                }
+                finally
+                {
+                    if (bloqueoMiCache)
+                        Monitor.Exit(objMiCache);
+                    if (bloqueoDirecCasa)
+                        Monitor.Exit(objDirecCasa);
+                    if (bloqueoDirecVictima)
+                        Monitor.Exit(objDirecVictima);
+                    if (bloqueoDirecBloque)
+                        Monitor.Exit(objDirecBloque);
+
+                    // Esto es de SC
                     contPrincipal.registro[regFuente] = 1;
                 }
-                else
-                {
-                    contPrincipal.registro[regFuente] = 0;
-                }
-
+                #endregion
+            }
+            else
+            {
+                // Si el LoadLinked no está en todas
+                contPrincipal.registro[regFuente] = 0;
                 contPrincipal.loadLinkActivo = false;
-            }*/
+            }
         }
 
-        private int getNumeroProcesador(int bloque) 
+        private int getNumeroProcesador(int bloque)
         {
             return (int)(bloque / 8);
         }
@@ -799,7 +977,7 @@ namespace Arquitectura_CPU
             try
             {
                 Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
-                if(bloqueoMiCache)
+                if (bloqueoMiCache)
                 {
                     #region bloqueoMiCache
                     objMiCache = this.cacheDatos;
@@ -867,7 +1045,7 @@ namespace Arquitectura_CPU
                             }
 
                         }
-                        if(puedeContinuarDesdeBloqueVictima)
+                        if (puedeContinuarDesdeBloqueVictima)
                         {
                             int numProcBloque = getNumeroProcesador(direccion.Item1);
                             Monitor.TryEnter(procesadores.ElementAt(numProcBloque).directorio, ref bloqueoDirecBloque);
@@ -958,9 +1136,9 @@ namespace Arquitectura_CPU
             {
                 if (bloqueoMiCache)
                     Monitor.Exit(objMiCache);
-                if(bloqueoDirecVictima)
+                if (bloqueoDirecVictima)
                     Monitor.Exit(objDirecVictima);
-                if(bloqueoDirecBloque)
+                if (bloqueoDirecBloque)
                     Monitor.Exit(objDirecBloque);
             }
             return resultado;
@@ -968,13 +1146,12 @@ namespace Arquitectura_CPU
 
         public void loadLink(int regFuente2, int posMem)
         {
-            if(loadWord(regFuente2, posMem))
-            {
-                Contexto contPrincipal = contextos.ElementAt(0);
-                contPrincipal.registro[32] = posMem; //Actualiza el valor de RL 
-                contPrincipal.loadLinkActivo = true;
-                //pone bandera de loadLinkActivo en true
-            }
+            Contexto contPrincipal = contextos.ElementAt(0);
+            var direccion = getPosicion(posMem);
+            contPrincipal.loadLinkActivo = true;
+            contPrincipal.registro[32] = posMem; // Actualiza el valor de RL 
+            contPrincipal.bloque_linked = direccion.Item1;
+            loadWord(regFuente2, posMem);
         }
 
 
@@ -1016,7 +1193,7 @@ namespace Arquitectura_CPU
                         /// @TODO Ejecutar mofo
                         console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2])));
                         bool res = manejoInstrucciones(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]);
-                        if(res)
+                        if (res)
                         {
                             //Console.WriteLine("[{0}] Murio hilo {1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual);
                             contextos.ElementAt(0).cicloFinal = cicloActual;
@@ -1030,11 +1207,13 @@ namespace Arquitectura_CPU
                             {
                                 // Hacer cambio de contexto!
                                 //Console.WriteLine("[{0}] Cambio contexto, ciclo: {1}", id, cicloActual); 
+                                contextos.ElementAt(0).loadLinkActivo = false;
+                                contextos.ElementAt(0).registro[32] = -1;
                                 ShiftLeft(contextos, 1);
                                 if (contextos.ElementAt(0).cicloInicial == -1)
                                     contextos.ElementAt(0).cicloInicial = cicloActual;
                             }
-                        }   
+                        }
                     }
                 }
                 else
@@ -1051,9 +1230,9 @@ namespace Arquitectura_CPU
                 }
                 cicloActual++;
             }
-            
+
             sync.RemoveParticipant();
-        }        
+        }
     }
 
 }

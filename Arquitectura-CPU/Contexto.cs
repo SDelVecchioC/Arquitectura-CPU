@@ -12,7 +12,8 @@ namespace Arquitectura_CPU
         public int cicloInicial, cicloFinal;
         public int[] registro;
         public int pc;
-        public bool loadLinkActivo;
+        public bool loadLinkActivo; //se pierde en cambios de contexto
+        public int bloque_linked; // Indica el bloque linqueado
         public Contexto(int pc, int id, int idProc)
         {
             registro = new int[33];
@@ -21,11 +22,12 @@ namespace Arquitectura_CPU
                 registro[i] = 0;
             }
 
-            registro[32] = -1; //RL
+            registro[32] = -1; // RL (se pierde en cambios de contexto)
             this.pc = pc;
             this.id = id;
             this.idProc = idProc;
             this.cicloInicial = -1;
+            bloque_linked = -1; 
             loadLinkActivo = false; 
         }
     }
