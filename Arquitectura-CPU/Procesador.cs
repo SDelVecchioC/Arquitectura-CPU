@@ -1038,6 +1038,17 @@ namespace Arquitectura_CPU
                                 if (estadoBloqueVictima == ESTADO_COMPARTIDO)
                                 {
                                     procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
+                                    bool compartidoEnOtrasCaches = false;
+                                    for (int i = 1; i < 4; i++) {
+                                        if (procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][i]== 1)
+                                        {
+                                            compartidoEnOtrasCaches = true; 
+                                        }
+                                    }
+                                    if (!compartidoEnOtrasCaches)
+                                    {
+                                        procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][0] = ESTADO_UNCACHED;
+                                    }
                                     procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                     procesadorBloqueVictima.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                 }
