@@ -706,7 +706,7 @@ namespace Arquitectura_CPU
         {
             bool exito = true;
             bool bloqueoCache = false;
-            // TODO
+
             List<Procesador> procesadoresTienenComp = new List<Procesador>();
             for(int i = 0; i < 3; i++)
             {
@@ -1212,7 +1212,6 @@ namespace Arquitectura_CPU
                     }
                     else
                     {
-                        /// @TODO Ejecutar mofo
                         console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2])));
                         bool res = manejoInstrucciones(cacheInstrucciones[posicion.Item1 % 4][posicion.Item2]);
                         if(res)
@@ -1220,7 +1219,7 @@ namespace Arquitectura_CPU
                             //Console.WriteLine("[{0}] Murio hilo {1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual);
                             contextos.ElementAt(0).cicloFinal = cicloActual;
                             contextosFinalizados.Add(contextos.ElementAt(0));
-                            contextos.RemoveAt(0);// @TODO contmanejorolar out of bounds
+                            contextos.RemoveAt(0);
                         }
                         else
                         {
