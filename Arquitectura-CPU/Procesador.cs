@@ -538,8 +538,10 @@ namespace Arquitectura_CPU
             procesadores.ElementAt(numProcBloque).directorio[direccion.Item1 % DIRECT_FILAS][id + 1] = 1; // indica la cache del procesador en el que esta modificado 
         }
         
-        public void storeWord(int posMem, int regFuente)
+        public bool storeWord(int posMem, int regFuente)
         {
+            bool exito = true;
+
             bool bloqueoMiCache = false;
             bool bloqueoDirecCasa = false;
             bool bloqueoDirecVictima = false;
@@ -555,10 +557,10 @@ namespace Arquitectura_CPU
             object objDirecBloque = null;
             object objCacheBloque = null;
 
+            Contexto contPrincipal = contextos.ElementAt(0);
+
             try
             {
-                Contexto contPrincipal = contextos.ElementAt(0);
-
                 Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
                 if(bloqueoMiCache)
                 {
@@ -586,13 +588,12 @@ namespace Arquitectura_CPU
                                     bool res = nuevoInvalidarCaches(procesadorDirecCasa, direccion, contPrincipal, regFuente);
                                     if (!res)
                                     {
-                                        contPrincipal.pc -= 4;
+                                        exito = false;
                                     }
                                 }
                                 else
                                 {
-                                    //libero 
-                                    contPrincipal.pc -= 4;
+                                    exito = false;
                                 }
                                 break;
 
@@ -615,8 +616,20 @@ namespace Arquitectura_CPU
 
                                 if (estadoBloqueVictima == ESTADO_COMPARTIDO)
                                 {
-                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][procesadorBloqueVictima.id + 1] = 0;
-                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED; 
+                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
+                                    bool compartidoEnOtrasCaches = false;
+                                    for (int i = 1; i < 4; i++) {
+                                        if (procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][i + 1] == 1)
+                                        {
+                                            compartidoEnOtrasCaches = true; 
+                                        }
+                                    }
+                                    if (!compartidoEnOtrasCaches)
+                                    {
+                                        procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][0] = ESTADO_UNCACHED;
+                                    }
+                                    procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+                                    procesadorBloqueVictima.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1; 
                                 }
                                 else
                                 {
@@ -649,7 +662,15 @@ namespace Arquitectura_CPU
                                 switch (estadoBloque)
                                 {
                                     case ESTADO_UNCACHED:
-                                        // TODO
+                                        for(int i = 0; i < 4; i++)
+                                        {
+                                            cacheDatos[direccion.Item1 % CACHDAT_FILAS][i] = procesadorDirecCasa.memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0];
+                                        }
+                                        procesadorDirecCasa.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                        procesadorDirecCasa.directorio[direccion.Item1 % DIRECT_FILAS][id + 1] = 1;
+
+                                        cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente];
+                                        break;
                                     case ESTADO_MODIFICADO:
                                         Procesador procesQueTieneModificado = null;
                                         for(int i = 0; i < 3; i++)
@@ -665,7 +686,7 @@ namespace Arquitectura_CPU
                                         bool res = nuevoInvalidarCaches(procesadorDirecCasa, direccion, contPrincipal, regFuente);
                                         if(!res)
                                         {
-                                            contPrincipal.pc -= 4;
+                                            exito = false;
                                         }
                                         break;
                                 }
@@ -673,12 +694,12 @@ namespace Arquitectura_CPU
                             }
                             else
                             {
-                                contPrincipal.pc -= 4;
+                                exito = false;
                             }
                         }
                         else
                         {
-                            contPrincipal.pc -= 4;
+                            exito = false;
                         }
                         #endregion
                     }
@@ -686,7 +707,7 @@ namespace Arquitectura_CPU
                 }
                 else
                 {
-                    contPrincipal.pc -= 4;
+                    exito = false;
                 }
             }
             finally
@@ -699,7 +720,10 @@ namespace Arquitectura_CPU
                     Monitor.Exit(objDirecVictima);
                 if (bloqueoDirecBloque)
                     Monitor.Exit(objDirecBloque);
+                if(exito == false)
+                    contPrincipal.pc -= 4;
             }
+            return exito;
         }
 
         private bool nuevoInvalidarCaches(Procesador procQueTieneDirecCasa, Tuple<int, int> direccion, Contexto contPrincipal, int regFuente)
@@ -1054,10 +1078,6 @@ namespace Arquitectura_CPU
                                 }
                                 else if (estadoBloqueVictima == ESTADO_MODIFICADO)
                                 {
-                                    // el bloque víctima está M
-                                    // manda a guardar el bloque   
-                                    // actualizar directorio
-                                    // poner I cache propia
                                     for (int i = 0; i < 4; i++)
                                     {
                                         procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
