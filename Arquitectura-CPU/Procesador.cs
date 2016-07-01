@@ -1040,7 +1040,7 @@ namespace Arquitectura_CPU
                                     procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
                                     bool compartidoEnOtrasCaches = false;
                                     for (int i = 1; i < 4; i++) {
-                                        if (procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][i]== 1)
+                                        if (procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][i + 1] == 1)
                                         {
                                             compartidoEnOtrasCaches = true; 
                                         }
@@ -1064,7 +1064,7 @@ namespace Arquitectura_CPU
                                     }
                                     estoyEnRetraso = true;
                                     ciclosEnRetraso += 16;
-                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = ESTADO_UNCACHED; // actualiza el directorio poniendo cero                                                                                                                 // poner I cache propia
+                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = ESTADO_UNCACHED;                                                                                                                // poner I cache propia
                                     procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                     procesadorBloqueVictima.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                 }
@@ -1128,30 +1128,27 @@ namespace Arquitectura_CPU
                                     {
                                         this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i] = proceQueTieneElBloque.memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0];
                                     }
-                                    this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
-                                    this.blockMapDatos[direccion.Item1 % CACHDAT_FILAS] = direccion.Item1;
+                                    cacheDatos[direccion.Item1 % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
+                                    blockMapDatos[direccion.Item1 % CACHDAT_FILAS] = direccion.Item1;
 
                                     proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
                                     proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][id + 1] = 1;
 
-                                    contPrincipal.registro[regFuente2] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2];
+                                    contPrincipal.registro[regFuente2] = cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2];
                                 }    
                                 else
                                 {
-                                    contPrincipal.pc -= 4;
                                     resultado = false;
                                 }      
                                 #endregion
                             }
                             else
                             {
-                                contPrincipal.pc -= 4;
                                 resultado = false;
                             }
                         }
                         else
                         {
-                            contPrincipal.pc -= 4;
                             resultado = false;
                         }
                     }
@@ -1159,7 +1156,6 @@ namespace Arquitectura_CPU
                 }
                 else
                 {
-                    contPrincipal.pc -= 4;
                     resultado = false;
                 }
             }
@@ -1173,6 +1169,8 @@ namespace Arquitectura_CPU
                     Monitor.Exit(objDirecBloque);
                 if (bloqueoCacheBloque && objCacheBloque != null)
                     Monitor.Exit(objCacheBloque);
+                if(resultado == false)
+                    contPrincipal.pc -= 4;
             }
             return resultado;
         }
