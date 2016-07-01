@@ -583,7 +583,11 @@ namespace Arquitectura_CPU
                                 if (bloqueoDirecCasa)
                                 {
                                     // revisar quien tiene cache Compartida
-                                    nuevoInvalidarCaches();
+                                    bool res = nuevoInvalidarCaches(procesadorDirecCasa, direccion, contPrincipal, regFuente);
+                                    if (!res)
+                                    {
+                                        contPrincipal.pc -= 4;
+                                    }
                                 }
                                 else
                                 {
@@ -658,7 +662,11 @@ namespace Arquitectura_CPU
                                         // TODO
                                         break;
                                     case ESTADO_COMPARTIDO:
-                                        nuevoInvalidarCaches();
+                                        bool res = nuevoInvalidarCaches(procesadorDirecCasa, direccion, contPrincipal, regFuente);
+                                        if(!res)
+                                        {
+                                            contPrincipal.pc -= 4;
+                                        }
                                         break;
                                 }
                                 #endregion
@@ -694,10 +702,49 @@ namespace Arquitectura_CPU
             }
         }
 
-        private void nuevoInvalidarCaches()
+        private bool nuevoInvalidarCaches(Procesador procQueTieneDirecCasa, Tuple<int, int> direccion, Contexto contPrincipal, int regFuente)
         {
+            bool exito = true;
+            bool bloqueoCache = false;
             // TODO
+            List<Procesador> procesadoresTienenComp = new List<Procesador>();
+            for(int i = 0; i < 3; i++)
+            {
+                if (i != id && procQueTieneDirecCasa.directorio[direccion.Item1 % DIRECT_FILAS][i + 1] == 1)
+                    procesadoresTienenComp.Add(procesadores.ElementAt(i));
+            }
+            if(procesadoresTienenComp.Count == 1)
+            {
+                Procesador proc = procesadoresTienenComp.First();
+                try
+                {
+                    Monitor.TryEnter(proc.cacheDatos, ref bloqueoCache);
+                    if(bloqueoCache)
+                    {
+                        proc.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+                        proc.blockMapDatos[direccion.Item1 % CACHDAT_FILAS] = -1;
+
+                        procQueTieneDirecCasa.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
+                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente];
+                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                    }
+                    else
+                    {
+                        exito = false;
+                    }
+                }
+                finally
+                {
+                    if (bloqueoCache)
+                        Monitor.Exit(proc.cacheDatos);
+                }
+            }
+            else if(procesadoresTienenComp.Count == 2)
+            {
+                // TODO
+            }
             throw new NotImplementedException();
+            return exito;
         }
 
         public void storeConditional(int posMem, int regFuente)
@@ -960,7 +1007,7 @@ namespace Arquitectura_CPU
                     objMiCache = this.cacheDatos;
                     if (bloqueEnMiCache(direccion))
                     {
-                        //HIT
+                        // HIT
                         contPrincipal.registro[regFuente2] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2];
                     }
                     else
@@ -970,8 +1017,6 @@ namespace Arquitectura_CPU
                         int estadoBloqueVictima = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
                         if (estadoBloqueVictima == ESTADO_COMPARTIDO || estadoBloqueVictima == ESTADO_MODIFICADO)
                         {
-                            // pide directorio de bloque victima 
-                            // lo bloquea 
                             int numeroBloqueVictima = this.blockMapDatos[direccion.Item1 % CACHDAT_FILAS];
                             Procesador procesadorBloqueVictima = procesadores.ElementAt(getNumeroProcesador(numeroBloqueVictima));
                             Monitor.TryEnter(procesadorBloqueVictima.directorio, ref bloqueoDirecVictima);
@@ -979,21 +1024,20 @@ namespace Arquitectura_CPU
                             {
                                 #region bloqueoDirecVictima
                                 objDirecVictima = procesadorBloqueVictima.directorio;
-                                // bloqueo directorio victima
+
                                 if (procesadorBloqueVictima == this)
                                 {
                                     estoyEnRetraso = true;
-                                    ciclosEnRetraso += 2; //ciclos que gasta en consulta directorio local
+                                    ciclosEnRetraso += 2; // ciclos que gasta en consulta directorio local
                                 }
                                 else
                                 {
                                     estoyEnRetraso = true;
-                                    ciclosEnRetraso += 4; //ciclos que gasta en consulta directorio remoto
+                                    ciclosEnRetraso += 4; // ciclos que gasta en consulta directorio remoto
                                 }
                                 if (estadoBloqueVictima == ESTADO_COMPARTIDO)
                                 {
-                                    // el bloque victima está C
-                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = ESTADO_UNCACHED; // actualiza el directorio poniendo cero                                                                                                                 // poner I cache propia
+                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
                                     procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                     procesadorBloqueVictima.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                 }
@@ -1005,7 +1049,7 @@ namespace Arquitectura_CPU
                                     // poner I cache propia
                                     for (int i = 0; i < 4; i++)
                                     {
-                                        procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] =procesadorBloqueVictima.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i];
+                                        procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
                                     }
                                     estoyEnRetraso = true;
                                     ciclosEnRetraso += 16;
@@ -1017,11 +1061,8 @@ namespace Arquitectura_CPU
                             }
                             else
                             {
-                                contPrincipal.pc -= 4;
                                 puedeContinuarDesdeBloqueVictima = false;
-                                resultado = false;
                             }
-
                         }
                         if(puedeContinuarDesdeBloqueVictima)
                         {
@@ -1045,7 +1086,8 @@ namespace Arquitectura_CPU
                                     ciclosEnRetraso += 4; // ciclos que gasta en consulta directorio remoto
                                 }
                                 int estadoBloque = proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO];
-                                if(estadoBloque == ESTADO_MODIFICADO)
+
+                                if (estadoBloque == ESTADO_MODIFICADO)
                                 {
                                     Procesador procQueLoTieneM = null;
                                     for(int i = 0; i < 3; i++)
@@ -1064,12 +1106,9 @@ namespace Arquitectura_CPU
                                             proceQueTieneElBloque.memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0] = procQueLoTieneM.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i];
                                         }
                                         procQueLoTieneM.cacheDatos[direccion.Item1 % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
+
                                         proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
-                                    }
-                                    else
-                                    {
-                                        contPrincipal.pc -= 4;
-                                        resultado = false;
+                                        proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][procQueLoTieneM.id + 1] = 1;
                                     }
                                 }
                                 if(bloqueoCacheBloque) // se asegura que no hizo fail de try lock mas arriba
@@ -1079,9 +1118,18 @@ namespace Arquitectura_CPU
                                         this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][i] = proceQueTieneElBloque.memoriaPrincipal[direccion.Item1 % BLOQUES_COMP][i][0];
                                     }
                                     this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
+                                    this.blockMapDatos[direccion.Item1 % CACHDAT_FILAS] = direccion.Item1;
+
                                     proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
+                                    proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][id + 1] = 1;
+
                                     contPrincipal.registro[regFuente2] = this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2];
-                                }          
+                                }    
+                                else
+                                {
+                                    contPrincipal.pc -= 4;
+                                    resultado = false;
+                                }      
                                 #endregion
                             }
                             else
@@ -1089,6 +1137,11 @@ namespace Arquitectura_CPU
                                 contPrincipal.pc -= 4;
                                 resultado = false;
                             }
+                        }
+                        else
+                        {
+                            contPrincipal.pc -= 4;
+                            resultado = false;
                         }
                     }
                     #endregion
