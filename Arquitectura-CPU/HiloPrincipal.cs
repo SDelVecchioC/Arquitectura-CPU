@@ -106,7 +106,6 @@ namespace Arquitectura_CPU
             }
 
             console.WriteLine(String.Format("Puede consultar la salida de este programa en el archivo {0}", console.Guardar()));
-            console.Guardar();
             console.WriteLine("Presione una tecla para salir");
             Console.ReadLine();
         }

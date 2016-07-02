@@ -223,49 +223,49 @@ namespace Arquitectura_CPU
                     DADDI RX, RY, #n : Rx <-- (Ry) + n
                     CodOp: 8 RF1: Y RF2 O RD: x RD O IMM:n
                     */
-                    res = String.Format("DADDI R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], regDest);
+                    res = String.Format("DADDI R{0},R{1},{2}", regFuente2, regFuente1, regDest);
                     break;
                 case 32:
                     /*
                     DADD RX, RY, #n : Rx <-- (Ry) + (Rz)
                     CodOp: 32 RF1: Y RF2 O RD: x RD o IMM:Rz
                     */
-                    res = String.Format("DADD R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
+                    res = String.Format("DADD R{0},R{1},R{2}", regDest, regFuente1, regFuente2);
                     break;
                 case 34:
                     /*
                     DSUB RX, RY, #n : Rx <-- (Ry) - (Rz)
                     CodOp: 34 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    res = String.Format("DSUB R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
+                    res = String.Format("DSUB R{0},R{1},R{2}", regDest, regFuente1, regFuente2);
                     break;
                 case 12:
                     /*
                     DMUL RX, RY, #n : Rx <-- (Ry) * (Rz)
                     CodOp: 12 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    res = String.Format("DMUL R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
+                    res = String.Format("DMUL R{0},R{1},R{2}", regDest, regFuente1, regFuente2);
                     break;
                 case 14:
                     /*
                     DDIV RX, RY, #n : Rx <-- (Ry) / (Rz)
                     CodOp: 14 RF1: Y RF2 O RD: z RD o IMM:X
                     */
-                    res = String.Format("DDIV R{0},{1},{2}", regFuente1, contPrincipal.registro[regFuente2], contPrincipal.registro[regDest]);
+                    res = String.Format("DDIV R{0},R{1},R{2}", regDest, regFuente1, regFuente2);
                     break;
                 case 4:
                     /*
                     BEQZ RX, ETIQ : Si RX = 0 salta 
                     CodOp: 4 RF1: Y RF2 O RD: 0 RD o IMM:n
                     */
-                    res = String.Format("BEQZ R{0},{1}", contPrincipal.registro[regFuente1], regDest);
+                    res = String.Format("BEQZ R{0},{1}", regFuente1, regDest);
                     break;
                 case 5:
                     /*
                      BEQNZ RX, ETIQ : Si RX != 0 salta 
                      CodOp: 5 RF1: x RF2 O RD: 0 RD o IMM:n
                      */
-                    res = String.Format("BEQNZ R{0},{1}", contPrincipal.registro[regFuente1], regDest);
+                    res = String.Format("BEQNZ R{0},{1}", regFuente1, regDest);
                     break;
                 case 3:
                     /*
@@ -279,7 +279,7 @@ namespace Arquitectura_CPU
                     JR RX: PC=RX
                     CodOp: 2 RF1: X RF2 O RD: 0 RD o IMM:0
                     */
-                    res = String.Format("JR RX{0}", contPrincipal.registro[regFuente1]);
+                    res = String.Format("JR R{0}", regFuente1);
                     break;
                 case 63:
                     /*
@@ -1070,16 +1070,18 @@ namespace Arquitectura_CPU
                                 {
                                     procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
                                     bool compartidoEnOtrasCaches = false;
-                                    for (int i = 1; i < 4; i++) {
+                                    for (int i = 0; i < 3; i++)
+                                    {
                                         if (procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][i + 1] == 1)
                                         {
-                                            compartidoEnOtrasCaches = true; 
+                                            compartidoEnOtrasCaches = true;
                                         }
                                     }
                                     if (!compartidoEnOtrasCaches)
                                     {
-                                        procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][0] = ESTADO_UNCACHED;
+                                        procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED;
                                     }
+
                                     procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                     procesadorBloqueVictima.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                 }
@@ -1087,18 +1089,20 @@ namespace Arquitectura_CPU
                                 {
                                     for (int i = 0; i < 4; i++)
                                     {
-                                        procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
+                                        procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
                                     }
                                     estoyEnRetraso = true;
                                     ciclosEnRetraso += 16;
-                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = ESTADO_UNCACHED;                                                                                                                // poner I cache propia
-                                    procesadorBloqueVictima.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-                                    procesadorBloqueVictima.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
+                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED; 
+
+                                    this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+                                    this.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                 }
                                 #endregion
                             }
                             else
                             {
+                                console.WriteLine("se cae xq no bloquea direc victima");
                                 puedeContinuarDesdeBloqueVictima = false;
                             }
                         }
@@ -1149,7 +1153,7 @@ namespace Arquitectura_CPU
                                         proceQueTieneElBloque.directorio[direccion.Item1 % DIRECT_FILAS][procQueLoTieneM.id + 1] = 1;
                                     }
                                 }
-                                if(bloqueoCacheBloque) // se asegura que no hizo fail de try lock mas arriba
+                                if(estadoBloque != ESTADO_MODIFICADO || (estadoBloque == ESTADO_MODIFICADO && bloqueoCacheBloque)) // se asegura que no hizo fail de try lock mas arriba
                                 {
                                     for (int i = 0; i < 4; i++)
                                     {
@@ -1165,6 +1169,7 @@ namespace Arquitectura_CPU
                                 }    
                                 else
                                 {
+                                    console.WriteLine("se cae xq no bloquea cache bloque");
                                     resultado = false;
                                 }      
                                 #endregion
@@ -1183,6 +1188,7 @@ namespace Arquitectura_CPU
                 }
                 else
                 {
+                    console.WriteLine("se cae xq no bloquea cache");
                     resultado = false;
                 }
             }
