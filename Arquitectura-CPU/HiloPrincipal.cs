@@ -10,33 +10,20 @@ namespace Arquitectura_CPU
 {
     class HiloPrincipal
     {
-        //URL: http://stackoverflow.com/questions/3892734/split-c-sharp-collection-into-equal-parts-maintaining-sort
-        public static List<T>[] Partition<T>(List<T> list, int totalPartitions)
+        public static List<List<T>> SplitList<T>(List<T> locations, int nSize)
         {
-            if (list == null)
-                throw new ArgumentNullException("list");
 
-            if (totalPartitions < 1)
-                throw new ArgumentOutOfRangeException("totalPartitions");
-
-            List<T>[] partitions = new List<T>[totalPartitions];
-
-            int maxSize = (int)Math.Ceiling(list.Count / (double)totalPartitions);
-            int k = 0;
-
-            for (int i = 0; i < partitions.Length; i++)
+            List<List<T>> res = new List<List<T>>();
+            for(int i = 0; i < nSize; i++)
             {
-                partitions[i] = new List<T>();
-                for (int j = k; j < k + maxSize; j++)
-                {
-                    if (j >= list.Count)
-                        break;
-                    partitions[i].Add(list[j]);
-                }
-                k += maxSize;
+                var l = new List<T>();
+                res.Add(l);
             }
-
-            return partitions;
+            for(int i = 0; i < locations.Count; i++)
+            {
+                res.ElementAt(i % nSize).Add(locations.ElementAt(i));
+            }
+            return res;
         }
 
         static void Main(string[] args)
@@ -68,7 +55,7 @@ namespace Arquitectura_CPU
                 programas.Add(contents);
             }
 
-            var programasPorCpu = Partition(programas, cantProcesadores);
+            List<List<string>> programasPorCpu = SplitList(programas, cantProcesadores);
 
             // creacion de procesadores
             for (int i = 0; i < cantProcesadores; i++)

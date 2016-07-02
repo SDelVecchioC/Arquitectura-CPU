@@ -35,14 +35,6 @@ namespace Arquitectura_CPU
         {
             public int numeroBloque;
             public int numeroPalabra;
-            private int bloque;
-            private int posicion;
-
-            public Direccion(int bloque, int posicion) : this()
-            {
-                this.bloque = bloque;
-                this.posicion = posicion;
-            }
         }
 
         // estructuras de datos del procesador
@@ -508,9 +500,12 @@ namespace Arquitectura_CPU
         /// <returns></returns>
         private Direccion getPosicion(int direccion)
         {
-            int bloque = (int)direccion / 16;
-            int posicion = (direccion % 16) / 4;
-            return new Direccion(bloque, posicion);
+            int bloque = direccion / 16;
+            int palabra = (direccion % 16) / 4;
+            Direccion d;
+            d.numeroBloque = bloque;
+            d.numeroPalabra = palabra;
+            return d;
         }
 
         /// <summary>
