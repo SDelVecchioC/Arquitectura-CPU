@@ -59,12 +59,12 @@ C:\Users\b30640\Desktop\Arquitectura-CPU-gloryStore\Arquitectura-CPU\bin\Debug\A
 C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\2.txt
 C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.txt
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe.config
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\1.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\2.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.txt
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.pdb
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.exe
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
 C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\1.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\2.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.txt

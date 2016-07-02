@@ -585,8 +585,14 @@ namespace Arquitectura_CPU
                                 if (bloqueoDirecCasa)
                                 {
                                     // revisar quien tiene cache Compartida
-                                    bool res = nuevoInvalidarCaches(procesadorDirecCasa, direccion, contPrincipal, regFuente);
-                                    if (!res)
+                                    bool res = nuevoInvalidarCaches(procesadorDirecCasa, direccion);
+                                    if (res)
+                                    {
+                                        procesadorDirecCasa.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente];
+                                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                    }
+                                    else
                                     {
                                         exito = false;
                                     }
@@ -680,11 +686,16 @@ namespace Arquitectura_CPU
                                                 procesQueTieneModificado = procesadores.ElementAt(i);
                                             }
                                         }
-                                        // TODO
                                         break;
                                     case ESTADO_COMPARTIDO:
-                                        bool res = nuevoInvalidarCaches(procesadorDirecCasa, direccion, contPrincipal, regFuente);
-                                        if(!res)
+                                        bool res = nuevoInvalidarCaches(procesadorDirecCasa, direccion);
+                                        if (res)
+                                        {
+                                            procesadorDirecCasa.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                            this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente];
+                                            this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                        }
+                                        else
                                         {
                                             exito = false;
                                         }
@@ -726,7 +737,13 @@ namespace Arquitectura_CPU
             return exito;
         }
 
-        private bool nuevoInvalidarCaches(Procesador procQueTieneDirecCasa, Tuple<int, int> direccion, Contexto contPrincipal, int regFuente)
+        private void invalidar(Procesador procAInvalidar, Tuple<int, int> direccion)
+        {
+            procAInvalidar.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+            procAInvalidar.blockMapDatos[direccion.Item1 % CACHDAT_FILAS] = -1;
+        }
+
+        private bool nuevoInvalidarCaches(Procesador procQueTieneDirecCasa, Tuple<int, int> direccion)
         {
             bool exito = true;
             bool bloqueoCache = false;
@@ -737,20 +754,15 @@ namespace Arquitectura_CPU
                 if (i != id && procQueTieneDirecCasa.directorio[direccion.Item1 % DIRECT_FILAS][i + 1] == 1)
                     procesadoresTienenComp.Add(procesadores.ElementAt(i));
             }
-            if(procesadoresTienenComp.Count == 1)
+            for(int i = 0; i < procesadoresTienenComp.Count && exito; i++)
             {
-                Procesador proc = procesadoresTienenComp.First();
+                Procesador proc = procesadoresTienenComp.ElementAt(i);
                 try
                 {
                     Monitor.TryEnter(proc.cacheDatos, ref bloqueoCache);
-                    if(bloqueoCache)
+                    if (bloqueoCache)
                     {
-                        proc.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-                        proc.blockMapDatos[direccion.Item1 % CACHDAT_FILAS] = -1;
-
-                        procQueTieneDirecCasa.directorio[direccion.Item1 % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
-                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][direccion.Item2] = contPrincipal.registro[regFuente];
-                        this.cacheDatos[direccion.Item1 % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                        invalidar(proc, direccion);
                     }
                     else
                     {
@@ -763,11 +775,6 @@ namespace Arquitectura_CPU
                         Monitor.Exit(proc.cacheDatos);
                 }
             }
-            else if(procesadoresTienenComp.Count == 2)
-            {
-                // TODO
-            }
-            throw new NotImplementedException();
             return exito;
         }
 
@@ -1008,7 +1015,7 @@ namespace Arquitectura_CPU
             bool bloqueoMiCache = false;
             bool bloqueoDirecVictima = false;
             bool bloqueoDirecBloque = false;
-            bool bloqueoCacheBloque = true;
+            bool bloqueoCacheBloque = false;
 
             // en caso que no se logre lock de direc bloque victima no deja pasar
             bool puedeContinuarDesdeBloqueVictima = true;
@@ -1187,7 +1194,7 @@ namespace Arquitectura_CPU
                     Monitor.Exit(objDirecVictima);
                 if(bloqueoDirecBloque)
                     Monitor.Exit(objDirecBloque);
-                if (bloqueoCacheBloque && objCacheBloque != null)
+                if (bloqueoCacheBloque)
                     Monitor.Exit(objCacheBloque);
                 if(resultado == false)
                     contPrincipal.pc -= 4;
