@@ -642,10 +642,14 @@ namespace Arquitectura_CPU
                                     // manda a guardar el bloque   
                                     for (int i = 0; i < 4; i++)
                                     {
-                                        procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
+                                        procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
                                     }
+
                                     procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][procesadorBloqueVictima.id + 1] = 0;
                                     procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED;
+
+                                    this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+                                    this.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                 }
                                 #endregion
                             }
@@ -1093,7 +1097,8 @@ namespace Arquitectura_CPU
                                     }
                                     estoyEnRetraso = true;
                                     ciclosEnRetraso += 16;
-                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED; 
+                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED;
+                                    procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
 
                                     this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                     this.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
