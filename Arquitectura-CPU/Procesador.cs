@@ -560,6 +560,7 @@ namespace Arquitectura_CPU
                 try
                 {
                     /// Logra bloquear caché
+                    bloqueoCache = false;
                     Monitor.TryEnter(proc.cacheDatos, ref bloqueoCache);
                     if (bloqueoCache)
                     {
@@ -766,8 +767,8 @@ namespace Arquitectura_CPU
                                         procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
 
                                         /// Modifico bloque y cambio estado
-                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
-                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                        this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
+                                        this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
                                         break;
                                     case ESTADO_MODIFICADO:
                                         /// Busco el procesador
@@ -1056,7 +1057,7 @@ namespace Arquitectura_CPU
                                     }
 
                                     /// Actualizo mi caché
-                                    this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
+                                    this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_COMPARTIDO;
                                     this.blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
 
                                     /// Actualizo directorio
