@@ -614,18 +614,18 @@ namespace Arquitectura_CPU
             try
             {
                 /// Intento bloquear mi caché
-                Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
+                Monitor.TryEnter(cacheDatos, ref bloqueoMiCache);
                 if(bloqueoMiCache)
                 {
                     #region bloqueoMiCache
-                    objMiCache = this.cacheDatos;
+                    objMiCache = cacheDatos;
                     var direccion = getPosicion(posMem);
 
                     if (bloqueEnMiCache(direccion.numeroBloque))
                     {
                         #region hitMiCache
                         /// En este caso de da un HIT
-                        int estadoMiBloque = this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
+                        int estadoMiBloque = cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
                         /// Hay que revisar el estado del bloque
                         /// Si está Modificado entonces modifiquelo de nuevo y ya
                         /// Si está compartido hay que ir a invalidar a otros lados y luego modificar
@@ -654,8 +654,8 @@ namespace Arquitectura_CPU
                                         procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
 
                                         /// Hago el cambio
-                                        this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
-                                        this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
+                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
                                     }
                                     else
                                     {
@@ -708,14 +708,14 @@ namespace Arquitectura_CPU
                                         }
 
                                         /// Lo invalido en caché
-                                        this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-                                        this.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
+                                        cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+                                        blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                         break;
                                     case ESTADO_MODIFICADO:
                                         /// manda a guardar el bloque a memoria 
                                         for (int i = 0; i < 4; i++)
                                         {
-                                            procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
+                                            procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
                                         }
 
                                         /// Actualizo directorio
@@ -723,8 +723,8 @@ namespace Arquitectura_CPU
                                         procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED;
 
                                         /// Lo invalido en caché
-                                        this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-                                        this.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
+                                        cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+                                        blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                         break;
                                 }
                                 #endregion
@@ -758,17 +758,17 @@ namespace Arquitectura_CPU
                                         /// Cargo de memoria a mi caché
                                         for(int i = 0; i < 4; i++)
                                         {
-                                            this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
+                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
                                         }
-                                        this.blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
+                                        blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
 
                                         /// Actualizo directorio
                                         procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
                                         procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
 
                                         /// Modifico bloque y cambio estado
-                                        this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
-                                        this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
+                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
                                         break;
                                     case ESTADO_MODIFICADO:
                                         /// Busco el procesador
@@ -793,16 +793,17 @@ namespace Arquitectura_CPU
                                                 procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0] = procesQueTieneModificado.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i];
 
                                                 /// cargo a mi caché
-                                                this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
+                                                cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
                                             }
+                                            blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
 
                                             /// Actualizo caché otro procesador
                                             procesQueTieneModificado.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                             procesQueTieneModificado.blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = -1;
 
                                             /// Cambio palabra, actualizo estado
-                                            this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
-                                            this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
+                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
                                         }
                                         else
                                         {
@@ -818,8 +819,8 @@ namespace Arquitectura_CPU
                                             procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
 
                                             /// Cambio palabra, actualizo estado
-                                            this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
-                                            this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
+                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
                                         }
                                         else
                                         {
@@ -894,25 +895,25 @@ namespace Arquitectura_CPU
             Contexto contPrincipal = contextos.ElementAt(0);
             try
             {
-                Monitor.TryEnter(this.cacheDatos, ref bloqueoMiCache);
+                Monitor.TryEnter(cacheDatos, ref bloqueoMiCache);
                 if (bloqueoMiCache)
                 {
                     #region bloqueoMiCache
-                    objMiCache = this.cacheDatos;
+                    objMiCache = cacheDatos;
                     if (bloqueEnMiCache(direccion.numeroBloque))
                     {
                         /// caso que hay HIT
                         /// copie y vamonos
-                        contPrincipal.registro[regFuente2] = this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra];
+                        contPrincipal.registro[regFuente2] = cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra];
                     }
                     else
                     {
                         /// caso que hay un MISS
                         /// Hay que revisar el estado de bloque víctima 
-                        int estadoBloqueVictima = this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
+                        int estadoBloqueVictima = cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
                         if (estadoBloqueVictima == ESTADO_COMPARTIDO || estadoBloqueVictima == ESTADO_MODIFICADO)
                         {
-                            int numeroBloqueVictima = this.blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS];
+                            int numeroBloqueVictima = blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS];
                             Procesador procesadorBloqueVictima = procesadores.ElementAt(getNumeroProcesador(numeroBloqueVictima));
                             Monitor.TryEnter(procesadorBloqueVictima.directorio, ref bloqueoDirecVictima);
                             if (bloqueoDirecVictima)
@@ -956,14 +957,14 @@ namespace Arquitectura_CPU
                                         }
 
                                         /// Invalida la caché
-                                        this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-                                        this.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
+                                        cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+                                        blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                         break;
                                     case ESTADO_MODIFICADO:
                                         /// Guardo en memoria
                                         for (int i = 0; i < 4; i++)
                                         {
-                                            procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
+                                            procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
                                         }
 
                                         /// Ciclos de retraso
@@ -975,8 +976,8 @@ namespace Arquitectura_CPU
                                         procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
 
                                         /// Invalido en caché
-                                        this.cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-                                        this.blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
+                                        cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+                                        blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                         break;
                                 }
                                 #endregion
@@ -1053,12 +1054,12 @@ namespace Arquitectura_CPU
                                     /// Se trae el bloque de memoria a mi caché
                                     for (int i = 0; i < 4; i++)
                                     {
-                                        this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = proceQueTieneElBloque.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
+                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = proceQueTieneElBloque.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
                                     }
 
                                     /// Actualizo mi caché
-                                    this.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_COMPARTIDO;
-                                    this.blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
+                                    cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_COMPARTIDO;
+                                    blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
 
                                     /// Actualizo directorio
                                     proceQueTieneElBloque.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
