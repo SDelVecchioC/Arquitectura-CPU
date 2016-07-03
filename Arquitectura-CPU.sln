@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arquitectura-CPU", "Arquitectura-CPU\Arquitectura-CPU.csproj", "{3C52FAA9-A093-4E97-880B-22856CB3D1CD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interfaz", "Interfaz\Interfaz.csproj", "{0D5980BB-FA1A-4F81-AAA6-C5FD1BAD6FE5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{3C52FAA9-A093-4E97-880B-22856CB3D1CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C52FAA9-A093-4E97-880B-22856CB3D1CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C52FAA9-A093-4E97-880B-22856CB3D1CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D5980BB-FA1A-4F81-AAA6-C5FD1BAD6FE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D5980BB-FA1A-4F81-AAA6-C5FD1BAD6FE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D5980BB-FA1A-4F81-AAA6-C5FD1BAD6FE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D5980BB-FA1A-4F81-AAA6-C5FD1BAD6FE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

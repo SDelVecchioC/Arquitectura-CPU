@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Arquitectura_CPU
 {
-    class Contexto
+    public class Contexto
     {
         public int id, idProc;
         public int cicloInicial, cicloFinal;

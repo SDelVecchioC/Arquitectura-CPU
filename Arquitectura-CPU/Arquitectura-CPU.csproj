@@ -41,7 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Consola.cs" />
     <Compile Include="Contexto.cs" />
     <Compile Include="HiloPrincipal.cs" />
     <Compile Include="Procesador.cs" />

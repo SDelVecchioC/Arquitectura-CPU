@@ -8,11 +8,18 @@ using System.Threading.Tasks;
 
 namespace Arquitectura_CPU
 {
-    class HiloPrincipal
+    public class HiloPrincipal
     {
+        int cantProcesadores, quantum;
+
+        public HiloPrincipal(int q)
+        {
+            quantum = q;
+            cantProcesadores = 3;
+        }
+        /*
         public static List<List<T>> SplitList<T>(List<T> locations, int nSize)
         {
-
             List<List<T>> res = new List<List<T>>();
             for(int i = 0; i < nSize; i++)
             {
@@ -26,28 +33,14 @@ namespace Arquitectura_CPU
             return res;
         }
 
-        static void Main(string[] args)
-        {
-            int cantProcesadores = 3;
-
-            Consola console = new Consola();
-
+        public void Iniciar()
+        {   
             var sync = new Barrier(participantCount: cantProcesadores);
             List<string> programas = new List<string>();
 
             List<Procesador> procesadores = new List<Procesador>();
             List<Thread> hilos = new List<Thread>();
-            
-            // Recibe el valor de quantum del usuario
-            Console.WriteLine("Por favor indicar el quantum a utilizar");
-            string unParsedQuantum = Console.ReadLine();
-            int parsedQuantum;
-            while (!Int32.TryParse(unParsedQuantum, out parsedQuantum))
-            {
-                Console.WriteLine("El valor indicado no es numérico, por favor indicar el quantum a utilizar");
-                unParsedQuantum = Console.ReadLine();
-            } 
-                
+                  
             // Lee los archivos y los reparte
             foreach (string file in Directory.EnumerateFiles("./programas", "*.txt"))
             {
@@ -60,23 +53,21 @@ namespace Arquitectura_CPU
             // creacion de procesadores
             for (int i = 0; i < cantProcesadores; i++)
             {
-                var cpu = new Procesador(i, 2000, sync, programasPorCpu.ElementAt(i), console, parsedQuantum); //pasa por referencia los otros procesadores
+                var cpu = new Procesador(i, 2000, sync, programasPorCpu.ElementAt(i), consola, quantum);
                 procesadores.Add(cpu);
-            }
-
-            for (int i = 0; i < cantProcesadores; i++)
-            {
-                procesadores.ElementAt(i).setProcesadores(procesadores);
             }
 
             // creacion de hilos
             for (int i = 0; i < cantProcesadores; i++)
             {
-                var hiloCpu = new Thread(procesadores.ElementAt(i).Iniciar);
+                var proc = procesadores.ElementAt(i);
+                proc.setProcesadores(procesadores);
+                var hiloCpu = new Thread(proc.Iniciar);
                 hilos.Add(hiloCpu);
-                hiloCpu.Start();
+                //hiloCpu.Start();
+                consola.imprimirProcesador(proc);
             }
-
+            /*
             for (int i = 0; i < cantProcesadores; i++)
             {
                 hilos.ElementAt(i).Join();
@@ -94,9 +85,14 @@ namespace Arquitectura_CPU
 
             console.WriteLine(String.Format("Puede consultar la salida de este programa en el archivo {0}", console.Guardar()));
             console.WriteLine("Presione una tecla para salir");
-            Console.ReadLine();
-        }
+            Console.ReadLine();*/
+        //}
+    
+        static void Main()
+        {
 
+        }
+        /*
         private static void imprimirResultados(Procesador p, Consola console)
         {
             foreach (var contexto in p.contextosFinalizados)
@@ -126,6 +122,6 @@ namespace Arquitectura_CPU
                 console.WriteLine("");
             }
         }
-
+        */
     }
 }

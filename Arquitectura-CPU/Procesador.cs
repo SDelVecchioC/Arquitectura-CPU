@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Arquitectura_CPU
 {
-    class Procesador
+    public class Procesador
     {
         #region constantes
         // constantes: para salud mental
@@ -46,7 +46,7 @@ namespace Arquitectura_CPU
         private int ciclosEnRetraso;
 
         // referente a sincronizacion
-        public Barrier sync;
+        public Barrier barreraProcesadores, sync;
         public int id, cicloActual, maxCiclo;
         public int quantum;
         public List<Contexto> contextos, contextosFinalizados;
@@ -62,17 +62,14 @@ namespace Arquitectura_CPU
         public int[][] cacheDatos;
         public int[] blockMapDatos;
 
-        private Consola console;
-
         public List<Procesador> procesadores { get; set; }
 
-        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c, int recievedQuantum)
+        public Procesador(int id, Barrier s, Barrier b, List<string> programas, int recievedQuantum)
         {
-            console = c;
-            this.sync = s;
+            sync = s;
+            barreraProcesadores = b;
             this.id = id;
             cicloActual = 1;
-            this.maxCiclo = maxCiclo;
             estoyEnRetraso = false;
             ciclosEnRetraso = 0;
 
@@ -1122,81 +1119,94 @@ namespace Arquitectura_CPU
             loadWord(regFuente2, posMem);
         }
 
-
         public void Iniciar()
         {
-            while (contextos.Count > 0)
+
+        }
+
+
+        public void EjecutarInstruccion()
+        {
+            sync.SignalAndWait();
+
+            // console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
+            if (!estoyEnRetraso)
             {
-                // Need to sync here
-                sync.SignalAndWait();
-
-                /// todo
-                // console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
-                if (!estoyEnRetraso)
+                int pc = contextos.ElementAt(0).pc;
+                Direccion posicion = getPosicion(pc);
+                if (blockMap[posicion.numeroBloque % 4] != posicion.numeroBloque)
                 {
-
-                    int pc = contextos.ElementAt(0).pc;
-                    Direccion posicion = getPosicion(pc);
-                    if (blockMap[posicion.numeroBloque % 4] != posicion.numeroBloque)
+                    // Fallo de caché 
+                    for (int j = 0; j < 4; j++)
                     {
-                        // Fallo de caché 
-                        for (int j = 0; j < 4; j++)
+                        for (int i = 0; i < 4; i++)
                         {
-                            for (int i = 0; i < 4; i++)
-                            {
-                                //Console.WriteLine("i: "+i+" j: "+j);
-                                cacheInstrucciones[posicion.numeroBloque % 4][j][i] = memoriaPrincipal[posicion.numeroBloque][j][i];
-                                //Console.WriteLine("[{0}] Cache[{1}],[{2}],[{3}]=[{4}]", id, posicion.numeroBloque % 4, j, i, cacheInstrucciones[posicion.numeroBloque % 4][j][i]);
-                            }
+                            //Console.WriteLine("i: "+i+" j: "+j);
+                            cacheInstrucciones[posicion.numeroBloque % 4][j][i] = memoriaPrincipal[posicion.numeroBloque][j][i];
+                            //Console.WriteLine("[{0}] Cache[{1}],[{2}],[{3}]=[{4}]", id, posicion.numeroBloque % 4, j, i, cacheInstrucciones[posicion.numeroBloque % 4][j][i]);
                         }
-                        blockMap[posicion.numeroBloque % 4] = posicion.numeroBloque;
+                    }
+                    blockMap[posicion.numeroBloque % 4] = posicion.numeroBloque;
 
-                        estoyEnRetraso = true;
-                        ciclosEnRetraso = 16;
-                        //Console.WriteLine("[{0}] Fallo de cache, ciclo: {1}", id, cicloActual);
-                    }
-                    else
-                    {
-                        console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra])));
-                        bool res = manejoInstrucciones(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]);
-                        if(res)
-                        {
-                            //Console.WriteLine("[{0}] Murio hilo {1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual);
-                            contextos.ElementAt(0).cicloFinal = cicloActual;
-                            contextosFinalizados.Add(contextos.ElementAt(0));
-                            contextos.RemoveAt(0);
-                        }
-                        else
-                        {
-                            quantum--;
-                            if (quantum == 0)
-                            {
-                                // Hacer cambio de contexto!
-                                //Console.WriteLine("[{0}] Cambio contexto, ciclo: {1}", id, cicloActual); 
-                                ShiftLeft(contextos, 1);
-                                if (contextos.ElementAt(0).cicloInicial == -1)
-                                    contextos.ElementAt(0).cicloInicial = cicloActual;
-                            }
-                        }   
-                    }
+                    estoyEnRetraso = true;
+                    ciclosEnRetraso = 16;
+                    //Console.WriteLine("[{0}] Fallo de cache, ciclo: {1}", id, cicloActual);
                 }
                 else
                 {
-                    // si hay fallo de cache, el quantum no avanza
-                    if (ciclosEnRetraso == 0)
+                    bool res = manejoInstrucciones(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]);
+                    if (res)
                     {
-                        estoyEnRetraso = false;
+                        //Console.WriteLine("[{0}] Murio hilo {1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual);
+                        contextos.ElementAt(0).cicloFinal = cicloActual;
+                        contextosFinalizados.Add(contextos.ElementAt(0));
+                        contextos.RemoveAt(0);
                     }
                     else
                     {
-                        ciclosEnRetraso--;
+                        quantum--;
+                        if (quantum == 0)
+                        {
+                            // Hacer cambio de contexto!
+                            //Console.WriteLine("[{0}] Cambio contexto, ciclo: {1}", id, cicloActual); 
+                            ShiftLeft(contextos, 1);
+                            if (contextos.ElementAt(0).cicloInicial == -1)
+                                contextos.ElementAt(0).cicloInicial = cicloActual;
+                        }
                     }
                 }
-                cicloActual++;
             }
-            
-            sync.RemoveParticipant();
-        }        
+            else
+            {
+                // si hay fallo de cache, el quantum no avanza
+                if (ciclosEnRetraso == 0)
+                {
+                    estoyEnRetraso = false;
+                }
+                else
+                {
+                    ciclosEnRetraso--;
+                }
+            }
+
+            cicloActual++;
+
+            barreraProcesadores.SignalAndWait();
+
+            if (contextos.Count == 0)
+            {
+                sync.RemoveParticipant();
+                barreraProcesadores.RemoveParticipant();
+            }
+               
+        }     
+        
+        public string getInst()
+        {
+            int pc = contextos.ElementAt(0).pc;
+            Direccion posicion = getPosicion(pc);
+            return String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
+        }   
     }
 
 }

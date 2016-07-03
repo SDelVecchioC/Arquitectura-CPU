@@ -1,0 +1,49 @@
+﻿<Window x:Class="Interfaz.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Interfaz"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="607.5" Width="1025">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="79*"/>
+            <ColumnDefinition Width="146*"/>
+            <ColumnDefinition Width="146*"/>
+            <ColumnDefinition Width="146*"/>
+        </Grid.ColumnDefinitions>
+        <Label x:Name="label" Content="Procesador 1:" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="24"/>
+        <Label x:Name="label_Copy" Content="Procesador 2:" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="24"/>
+        <Label x:Name="label_Copy1" Content="Procesador 3:" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="24"/>
+        <Label x:Name="label1" Content="Directorio Casa:" Grid.Column="1" HorizontalAlignment="Left" Margin="10,350,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="direct1" ScrollViewer.VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" Grid.Column="1" HorizontalAlignment="Left" Margin="10,382,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="68" Width="266"/>
+        <Label x:Name="label1_Copy" Content="Registros:" Grid.Column="1" HorizontalAlignment="Left" Margin="10,48,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="registros1" Grid.Column="1" HorizontalAlignment="Left" Margin="10,84,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="146" Width="267"/>
+        <Label x:Name="label1_Copy1" Content="Memo Compartida:" Grid.Column="1" HorizontalAlignment="Left" Margin="10,460,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="memo1" Grid.Column="1" HorizontalAlignment="Left" Margin="10,496,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="70" Width="193"/>
+        <Label x:Name="label1_Copy2" Content="Directorio Casa:" Grid.Column="2" HorizontalAlignment="Left" Margin="11,350,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="direct2" Grid.Column="2" HorizontalAlignment="Left" Margin="11,382,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="68" Width="266"/>
+        <Label x:Name="label1_Copy3" Content="Registros:" Grid.Column="2" HorizontalAlignment="Left" Margin="11,48,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="registros2" Grid.Column="2" HorizontalAlignment="Left" Margin="11,84,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="146" Width="266"/>
+        <Label x:Name="label1_Copy4" Content="Memo Compartida:" Grid.Column="2" HorizontalAlignment="Left" Margin="11,460,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="memo2" Grid.Column="2" HorizontalAlignment="Left" Margin="11,496,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="70" Width="193"/>
+        <Label x:Name="label1_Copy5" Content="Directorio Casa:" Grid.Column="3" HorizontalAlignment="Left" Margin="10,350,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="direct3" Grid.Column="3" HorizontalAlignment="Left" Margin="10,382,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="68" Width="266"/>
+        <Label x:Name="label1_Copy6" Content="Registros:" Grid.Column="3" HorizontalAlignment="Left" Margin="10,48,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="registros3" Grid.Column="3" HorizontalAlignment="Left" Margin="10,84,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="146" Width="267"/>
+        <Label x:Name="label1_Copy7" Content="Memo Compartida:" Grid.Column="3" HorizontalAlignment="Left" Margin="10,460,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="memo3" Grid.Column="3" HorizontalAlignment="Left" Margin="10,496,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="70" Width="193"/>
+        <Label x:Name="label1_Copy8" Content="Caché Datos:" Grid.Column="1" HorizontalAlignment="Left" Margin="10,243,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="cache1" Grid.Column="1" HorizontalAlignment="Left" Margin="10,279,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="66" Width="193"/>
+        <Label x:Name="label1_Copy9" Content="Caché Datos:" Grid.Column="2" HorizontalAlignment="Left" Margin="11,243,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="cache2" Grid.Column="2" HorizontalAlignment="Left" Margin="11,279,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="66" Width="193"/>
+        <Label x:Name="label1_Copy10" Content="Caché Datos:" Grid.Column="3" HorizontalAlignment="Left" Margin="10,243,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <TextBlock x:Name="cache3" Grid.Column="3" HorizontalAlignment="Left" Margin="10,279,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="66" Width="193"/>
+        <TextBox x:Name="txtQuantum" HorizontalAlignment="Left" Height="23" Margin="10,33,0,0" TextWrapping="Wrap" Text="25" VerticalAlignment="Top" Width="96"/>
+        <Label x:Name="label2" Content="Quantum:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="button" Content="Button" HorizontalAlignment="Left" Margin="10,264,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+        <TextBlock x:Name="Instrucciones" HorizontalAlignment="Left" Margin="10,84,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="175" Width="136"/>
+
+    </Grid>
+</Window>
