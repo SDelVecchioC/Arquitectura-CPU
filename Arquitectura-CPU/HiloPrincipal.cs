@@ -74,14 +74,14 @@ namespace Arquitectura_CPU
             hiloCpu2.Join();
             hiloCpu3.Join();
 
-            imprimirResultados(procesador1, console);
+           /* imprimirResultados(procesador1, console);
             imprimirResultados(procesador2, console);
             imprimirResultados(procesador3, console);
 
             console.WriteLine("Memoria Compartida");
             imprimirMemoC(procesador1, console);
             imprimirMemoC(procesador2, console);
-            imprimirMemoC(procesador3, console);
+            imprimirMemoC(procesador3, console);*/
 
             console.WriteLine(String.Format("Puede consultar la salida de este programa en el archivo {0}", console.Guardar()));
             console.WriteLine("Presione una tecla para salir");

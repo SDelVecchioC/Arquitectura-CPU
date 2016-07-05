@@ -361,7 +361,7 @@ namespace Arquitectura_CPU
 
             Contexto contPrincipal = contextos.ElementAt(0);
 
-            contPrincipal.pc += 4;
+            string output = "";
             switch (codigoInstruccion)
             {
                 case 8:
@@ -471,7 +471,8 @@ namespace Arquitectura_CPU
                     * codOp: 35 RF1: Y RF2 O RD: X RD O IMM: n
                     * */
                     posMem = contPrincipal.registro[regFuente1] + regDest;
-                    loadWord(regFuente2, posMem);
+                    int loadRes = LoadWord(regFuente2, posMem);
+                    output = loadRes.ToString();
                     break;
                 case 43:
                     /* *
@@ -480,9 +481,20 @@ namespace Arquitectura_CPU
                      * codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
                      * */
                     posMem = contPrincipal.registro[regFuente1] + regDest;
-                    StoreWord(posMem, regFuente2);
+                    int storeRes = StoreWord(posMem, regFuente2);
+                    output = storeRes.ToString();
                     break;
             }
+            int pc = contextos.ElementAt(0).pc;
+            Direccion posicion = getPosicion(pc);
+
+            if(output != "")
+                console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3} Res: {4}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]), output));
+            else
+                console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra])));
+
+            contPrincipal.pc += 4;
+
             return res;
         }
 
@@ -589,12 +601,12 @@ namespace Arquitectura_CPU
         /// <param name="posMem"></param>
         /// <param name="regFuente"></param>
         /// <returns></returns>
-        public bool StoreWord(int posMem, int regFuente)
+        public int StoreWord(int posMem, int regFuente)
         {
             /// resultado final, sirve para
             /// 1. bajar el PC
             /// 2. indica si sí se hizo el SW
-            bool exito = true;
+            int exito = 0;
 
             /// banderas de locks
             bool bloqueoMiCache = false;
@@ -637,6 +649,7 @@ namespace Arquitectura_CPU
                             case ESTADO_MODIFICADO:
                                 /// Ya el estado esta modificado, solo cambio palabra
                                 cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
+                                exito = 1;
                                 break;
                             case ESTADO_COMPARTIDO:
                                 /// Busco el procesador que tiene el directorio casa del bloque
@@ -659,18 +672,19 @@ namespace Arquitectura_CPU
                                         /// Hago el cambio
                                         cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
                                         cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+
+                                        exito = 2;
                                     }
                                     else
                                     {
-                                        exito = false;
+                                        exito = -3;
                                     }
                                 }
                                 else
                                 {
-                                    exito = false;
+                                    exito = -2;
                                 }
                                 break;
-
                         }
                         #endregion
                     }
@@ -772,6 +786,8 @@ namespace Arquitectura_CPU
                                         /// Modifico bloque y cambio estado
                                         cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
                                         cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+
+                                        exito = 3;
                                         break;
                                     case ESTADO_MODIFICADO:
                                         /// Busco el procesador
@@ -786,7 +802,7 @@ namespace Arquitectura_CPU
 
                                         /// Intento bloquear su caché
                                         Monitor.TryEnter(procesQueTieneModificado.cacheDatos, ref bloqueoCacheModif);
-                                        if(bloqueoCacheModif)
+                                        if(bloqueoCacheModif && procesQueTieneModificado != null)
                                         {
                                             objCacheModif = procesQueTieneModificado.cacheDatos;
                                             
@@ -794,40 +810,44 @@ namespace Arquitectura_CPU
                                             {
                                                 /// copio a memoria
                                                 procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0] = procesQueTieneModificado.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i];
-
                                                 /// cargo a mi caché
-                                                cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
+                                                cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = procesQueTieneModificado.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i];
                                             }
+                                            /// Cambio palabra, actualizo estado
+                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
+                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
                                             blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
 
                                             /// Actualizo caché otro procesador
                                             procesQueTieneModificado.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                             procesQueTieneModificado.blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = -1;
 
-                                            /// Cambio palabra, actualizo estado
-                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
-                                            cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                            /// Actualizo directorio
+                                            procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][procesQueTieneModificado.id + 1] = 0;
+                                            procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
+                                            exito = 4;
                                         }
                                         else
                                         {
-                                            exito = false;
+                                            exito = -6;
                                         }                     
                                         break;
                                     case ESTADO_COMPARTIDO:
                                         bool res = InvalidarCachesCompartidas(procesadorDirecCasa, direccion);
                                         if (res)
                                         {
-                                            /// Actualizo directorio
-                                            procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
-                                            procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
-
                                             /// Cambio palabra, actualizo estado
                                             cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
                                             cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+
+                                            /// Actualizo directorio
+                                            procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                            procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
+                                            exito = 5;
                                         }
                                         else
                                         {
-                                            exito = false;
+                                            exito = -7;
                                         }
                                         break;
                                 }
@@ -835,12 +855,12 @@ namespace Arquitectura_CPU
                             }
                             else
                             {
-                                exito = false;
+                                exito = -5;
                             }
                         }
                         else
                         {
-                            exito = false;
+                            exito = -4;
                         }
                         #endregion
                     }
@@ -848,7 +868,7 @@ namespace Arquitectura_CPU
                 }
                 else
                 {
-                    exito = false;
+                    exito = -1;
                 }
             }
             finally
@@ -863,7 +883,7 @@ namespace Arquitectura_CPU
                     Monitor.Exit(objDirecBloque);
                 if (bloqueoCacheModif)
                     Monitor.Exit(objCacheModif);
-                if(exito == false)
+                if(exito < 1)
                     contPrincipal.pc -= 4;
             }
             return exito;
@@ -875,9 +895,9 @@ namespace Arquitectura_CPU
         /// <param name="regFuente2"></param>
         /// <param name="posMem"></param>
         /// <returns></returns>
-        public bool loadWord(int regFuente2, int posMem)
+        public int LoadWord(int regFuente2, int posMem)
         {
-            bool resultado = true;
+            int resultado = 0;
 
             /// banderas de locks
             bool bloqueoMiCache = false;
@@ -908,6 +928,7 @@ namespace Arquitectura_CPU
                         /// caso que hay HIT
                         /// copie y vamonos
                         contPrincipal.registro[regFuente2] = cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra];
+                        resultado = 1;
                     }
                     else
                     {
@@ -1070,28 +1091,30 @@ namespace Arquitectura_CPU
 
                                     /// Guardo en el registro
                                     contPrincipal.registro[regFuente2] = cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra];
+
+                                    resultado = 2;
                                 }
                                 else
                                 {
-                                    resultado = false;
+                                    resultado = -4;
                                 }
                                 #endregion
                             }
                             else
                             {
-                                resultado = false;
+                                resultado = -3;
                             }
                         }
                         else
                         {
-                            resultado = false;
+                            resultado = -2;
                         }
                     }
                     #endregion
                 }
                 else
                 {
-                    resultado = false;
+                    resultado = -1;
                 }
             }
             finally
@@ -1104,7 +1127,7 @@ namespace Arquitectura_CPU
                     Monitor.Exit(objDirecBloque);
                 if (bloqueoCacheBloque)
                     Monitor.Exit(objCacheBloque);
-                if (resultado == false)
+                if (resultado < 1)
                     contPrincipal.pc -= 4;
             }
             return resultado;
@@ -1122,13 +1145,13 @@ namespace Arquitectura_CPU
             contPrincipal.loadLinkActivo = true;
             contPrincipal.registro[32] = posMem; // Actualiza el valor de RL 
             contPrincipal.bloque_linked = direccion.numeroBloque;
-            loadWord(regFuente2, posMem);
+            LoadWord(regFuente2, posMem);
         }
 
 
         public void Iniciar()
         {
-            while (contextos.Count > 0 && cicloActual < 140)
+            while (contextos.Count > 0 && cicloActual < 1000)
             {
                 // Need to sync here
                 
@@ -1161,7 +1184,6 @@ namespace Arquitectura_CPU
                     }
                     else
                     {
-                        console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra])));
                         bool res = manejoInstrucciones(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]);
                         if(res)
                         {
