@@ -34,9 +34,6 @@ namespace Arquitectura_CPU
 
             var sync = new Barrier(participantCount: cantProcesadores);
             List<string> programas = new List<string>();
-
-            List<Procesador> procesadores = new List<Procesador>();
-            List<Thread> hilos = new List<Thread>();
             
             // Recibe el valor de quantum del usuario
             Console.WriteLine("Por favor indicar el quantum a utilizar");
@@ -57,40 +54,34 @@ namespace Arquitectura_CPU
 
             List<List<string>> programasPorCpu = SplitList(programas, cantProcesadores);
 
-            // creacion de procesadores
-            for (int i = 0; i < cantProcesadores; i++)
-            {
-                var cpu = new Procesador(i, 2000, sync, programasPorCpu.ElementAt(i), console, parsedQuantum); //pasa por referencia los otros procesadores
-                procesadores.Add(cpu);
-            }
+            Procesador procesador1 = new Procesador(0, sync, programasPorCpu.ElementAt(0), console, parsedQuantum);
+            Procesador procesador2 = new Procesador(1, sync, programasPorCpu.ElementAt(1), console, parsedQuantum);
+            Procesador procesador3 = new Procesador(2, sync, programasPorCpu.ElementAt(2), console, parsedQuantum);
 
-            for (int i = 0; i < cantProcesadores; i++)
-            {
-                procesadores.ElementAt(i).setProcesadores(procesadores);
-            }
+            procesador1.setProcesadores(ref procesador1, ref procesador2, ref procesador3);
+            procesador2.setProcesadores(ref procesador1, ref procesador2, ref procesador3);
+            procesador3.setProcesadores(ref procesador1, ref procesador2, ref procesador3);
 
-            // creacion de hilos
-            for (int i = 0; i < cantProcesadores; i++)
-            {
-                var hiloCpu = new Thread(procesadores.ElementAt(i).Iniciar);
-                hilos.Add(hiloCpu);
-                hiloCpu.Start();
-            }
+            var hiloCpu1 = new Thread(procesador1.Iniciar);
+            var hiloCpu2 = new Thread(procesador2.Iniciar);
+            var hiloCpu3 = new Thread(procesador3.Iniciar);
 
-            for (int i = 0; i < cantProcesadores; i++)
-            {
-                hilos.ElementAt(i).Join();
-            }
+            hiloCpu1.Start();
+            hiloCpu2.Start();
+            hiloCpu3.Start();
 
-            for (int i = 0; i < cantProcesadores; i++)
-            {
-                imprimirResultados(procesadores.ElementAt(i), console);
-            }
+            hiloCpu1.Join();
+            hiloCpu2.Join();
+            hiloCpu3.Join();
+
+            imprimirResultados(procesador1, console);
+            imprimirResultados(procesador2, console);
+            imprimirResultados(procesador3, console);
+
             console.WriteLine("Memoria Compartida");
-            for (int i = 0; i < cantProcesadores; i++)
-            {
-                imprimirMemoC(procesadores.ElementAt(i), console);
-            }
+            imprimirMemoC(procesador1, console);
+            imprimirMemoC(procesador2, console);
+            imprimirMemoC(procesador3, console);
 
             console.WriteLine(String.Format("Puede consultar la salida de este programa en el archivo {0}", console.Guardar()));
             console.WriteLine("Presione una tecla para salir");

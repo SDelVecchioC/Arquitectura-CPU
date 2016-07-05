@@ -66,15 +66,16 @@ namespace Arquitectura_CPU
 
         public List<Procesador> procesadores { get; set; }
 
-        public Procesador(int id, int maxCiclo, Barrier s, List<string> programas, Consola c, int recievedQuantum)
+        public Procesador(int id, Barrier s, List<string> programas, Consola c, int recievedQuantum)
         {
             console = c;
             this.sync = s;
             this.id = id;
             cicloActual = 1;
-            this.maxCiclo = maxCiclo;
             estoyEnRetraso = false;
             ciclosEnRetraso = 0;
+
+            procesadores = new List<Procesador>();
 
             quantum = recievedQuantum;
 
@@ -162,9 +163,11 @@ namespace Arquitectura_CPU
         /// Recibe y almacena las referencias de los procesadores
         /// </summary>
         /// <param name="p">Lista con los punteros a los procesadores</param>
-        public void setProcesadores(List<Procesador> p)
+        public void setProcesadores(ref Procesador p1, ref Procesador p2, ref Procesador p3)
         {
-            procesadores = p;
+            procesadores.Add(p1);
+            procesadores.Add(p2);
+            procesadores.Add(p3);
         }
 
         /// <summary>
@@ -280,7 +283,7 @@ namespace Arquitectura_CPU
                      BEQNZ RX, ETIQ : Si RX != 0 salta 
                      CodOp: 5 RF1: x RF2 O RD: 0 RD o IMM:n
                      */
-                    res = String.Format("BEQNZ R{0},{1}", regFuente1, regDest);
+                    res = String.Format("BNEQZ R{0},{1}", regFuente1, regDest);
                     break;
                 case 3:
                     /*
@@ -1125,11 +1128,12 @@ namespace Arquitectura_CPU
 
         public void Iniciar()
         {
-            while (contextos.Count > 0)
+            while (contextos.Count > 0 && cicloActual < 140)
             {
                 // Need to sync here
+                
                 sync.SignalAndWait();
-
+                
                 /// todo
                 // console.WriteLine(String.Format("[Procesador #{0}] Hilillo #{1}, ciclo: {2}", id, contextos.ElementAt(0).id, cicloActual)); 
                 if (!estoyEnRetraso)
