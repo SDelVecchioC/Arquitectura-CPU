@@ -362,6 +362,9 @@ namespace Arquitectura_CPU
             Contexto contPrincipal = contextos.ElementAt(0);
 
             string output = "";
+            int pc = contextos.ElementAt(0).pc;
+            Direccion posicion = getPosicion(pc);
+
             switch (codigoInstruccion)
             {
                 case 8:
@@ -369,6 +372,7 @@ namespace Arquitectura_CPU
                     DADDI RX, RY, #n : Rx <-- (Ry) + n
                     CodOp: 8 RF1: Y RF2 O RD: x RD O IMM:n
                     */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     contPrincipal.registro[regFuente2] = contPrincipal.registro[regFuente1] + regDest;
                     break;
                 case 32:
@@ -376,6 +380,7 @@ namespace Arquitectura_CPU
                     DADD RX, RY, #n : Rx <-- (Ry) + (Rz)
                     CodOp: 32 RF1: Y RF2 O RD: x RD o IMM:Rz
                     */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     contPrincipal.registro[regDest] = contPrincipal.registro[regFuente1] + contPrincipal.registro[regFuente2];
                     break;
                 case 34:
@@ -383,6 +388,7 @@ namespace Arquitectura_CPU
                     DSUB RX, RY, #n : Rx <-- (Ry) - (Rz)
                     CodOp: 34 RF1: Y RF2 O RD: z RD o IMM:X
                     */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     contPrincipal.registro[regDest] = contPrincipal.registro[regFuente1] - contPrincipal.registro[regFuente2];
                     break;
                 case 12:
@@ -390,6 +396,7 @@ namespace Arquitectura_CPU
                     DMUL RX, RY, #n : Rx <-- (Ry) * (Rz)
                     CodOp: 12 RF1: Y RF2 O RD: z RD o IMM:X
                     */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     contPrincipal.registro[regDest] = contPrincipal.registro[regFuente1] * contPrincipal.registro[regFuente2];
                     break;
                 case 14:
@@ -397,6 +404,7 @@ namespace Arquitectura_CPU
                     DDIV RX, RY, #n : Rx <-- (Ry) / (Rz)
                     CodOp: 14 RF1: Y RF2 O RD: z RD o IMM:X
                     */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     contPrincipal.registro[regDest] = contPrincipal.registro[regFuente1] / contPrincipal.registro[regFuente2];
                     break;
                 case 4:
@@ -404,6 +412,7 @@ namespace Arquitectura_CPU
                     BEQZ RX, ETIQ : Si RX = 0 salta 
                     CodOp: 4 RF1: Y RF2 O RD: 0 RD o IMM:n
                     */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     if (contPrincipal.registro[regFuente1] == 0)
                     {
                         contPrincipal.pc += (regDest << 2);
@@ -415,6 +424,7 @@ namespace Arquitectura_CPU
                      BEQNZ RX, ETIQ : Si RX != 0 salta 
                      CodOp: 5 RF1: x RF2 O RD: 0 RD o IMM:n
                      */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     if (contPrincipal.registro[regFuente1] != 0)
                     {
                         //salta a la etiqueta indicada por regDest
@@ -426,6 +436,7 @@ namespace Arquitectura_CPU
                     JAL n, R31=PC, PC = PC+n
                     CodOp: 3 RF1: 0 RF2 O RD: 0 RD o IMM:n
                     */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     contPrincipal.registro[31] = contPrincipal.pc;
                     contPrincipal.pc += regDest;
                     break;
@@ -434,6 +445,7 @@ namespace Arquitectura_CPU
                     JR RX: PC=RX
                     CodOp: 2 RF1: X RF2 O RD: 0 RD o IMM:0
                     */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     contPrincipal.pc = contPrincipal.registro[regFuente1];
                     break;
                 case 63:
@@ -441,6 +453,7 @@ namespace Arquitectura_CPU
                      fin
                      CodOp: 63 RF1: 0 RF2 O RD: 0 RD o IMM:0
                      */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     res = true;
                     break;
                 case 50:
@@ -450,8 +463,10 @@ namespace Arquitectura_CPU
                      * Rl <- n+(Ry)
                      * codOp: 50 RF1: Y RF2 O RD: X RD O IMM: n
                      * */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     posMem = contPrincipal.registro[regFuente1] + regDest;
-                    loadLink(regFuente2, posMem);
+                    var ll = loadLink(regFuente2, posMem);
+                    output += " Pos: " + posMem + " Res: " + ll.ToString();
                     break;
                 case 51:
                     /* *
@@ -460,8 +475,10 @@ namespace Arquitectura_CPU
                      * ELSE Rx =0
                      *  codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
                      * */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     posMem = contPrincipal.registro[regFuente1] + regDest;
-                    storeConditional(posMem, regFuente2);
+                    var sc = storeConditional(posMem, regFuente2);
+                    output += " Pos: " + posMem + " Res: " + sc.ToString();
                     break;
                 case 35:
                     /* *
@@ -470,9 +487,10 @@ namespace Arquitectura_CPU
                     * 
                     * codOp: 35 RF1: Y RF2 O RD: X RD O IMM: n
                     * */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     posMem = contPrincipal.registro[regFuente1] + regDest;
                     int loadRes = LoadWord(regFuente2, posMem);
-                    output = loadRes.ToString();
+                    output += " Pos: " + posMem + " Res: " + loadRes.ToString();
                     break;
                 case 43:
                     /* *
@@ -480,19 +498,20 @@ namespace Arquitectura_CPU
                      * m(N+(RY)) = rX
                      * codOp: 51 RF1: Y RF2 O RD: X RD O IMM: n
                      * */
+                    output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     posMem = contPrincipal.registro[regFuente1] + regDest;
                     int storeRes = StoreWord(posMem, regFuente2);
-                    output = storeRes.ToString();
+                    output += " Pos: " + posMem + " Res: " + storeRes.ToString();
                     break;
             }
-            int pc = contextos.ElementAt(0).pc;
-            Direccion posicion = getPosicion(pc);
 
-            if(output != "")
-                console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3} Res: {4}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]), output));
+            console.WriteLine(output);
+            /*
+            if (output != "")
+                console.WriteLine();
             else
                 console.WriteLine(String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra])));
-
+*/
             contPrincipal.pc += 4;
 
             return res;
@@ -925,9 +944,10 @@ namespace Arquitectura_CPU
                     objMiCache = cacheDatos;
                     if (bloqueEnMiCache(direccion.numeroBloque))
                     {
-                        /// caso que hay HIT
-                        /// copie y vamonos
-                        contPrincipal.registro[regFuente2] = cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra];
+                        // caso que hay HIT
+                        // copie y vamonos
+                        var fila = direccion.numeroBloque % CACHDAT_FILAS;
+                        contPrincipal.registro[regFuente2] = cacheDatos[fila][direccion.numeroPalabra];
                         resultado = 1;
                     }
                     else
@@ -980,26 +1000,26 @@ namespace Arquitectura_CPU
                                             procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED;
                                         }
 
-                                        /// Invalida la caché
+                                        // Invalida la caché
                                         cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                         blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                         break;
                                     case ESTADO_MODIFICADO:
-                                        /// Guardo en memoria
+                                        // Guardo en memoria
                                         for (int i = 0; i < 4; i++)
                                         {
                                             procesadorBloqueVictima.memoriaPrincipal[numeroBloqueVictima % BLOQUES_COMP][i][0] = cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][i];
                                         }
 
-                                        /// Ciclos de retraso
+                                        // Ciclos de retraso
                                         estoyEnRetraso = true;
                                         ciclosEnRetraso += 16;
 
-                                        /// Actualizo directorio
+                                        // Actualizo directorio
                                         procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED;
                                         procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
 
-                                        /// Invalido en caché
+                                        // Invalido en caché
                                         cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
                                         blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                         break;
@@ -1013,14 +1033,14 @@ namespace Arquitectura_CPU
                         }
                         if (puedeContinuarDesdeBloqueVictima)
                         {
-                            /// Significa que los locks del bloque victima se hicieron bien
+                            // Significa que los locks del bloque victima se hicieron bien
                             int numProc = getNumeroProcesador(direccion.numeroBloque);
                             Procesador proceQueTieneElBloque = procesadores.ElementAt(numProc);
 
                             Monitor.TryEnter(proceQueTieneElBloque.directorio, ref bloqueoDirecBloque);
                             if (bloqueoDirecBloque)
                             {
-                                /// Se bloqueo el directorio casa del bloque
+                                // Se bloqueo el directorio casa del bloque
                                 #region bloqueoDirecBloque
                                 objDirecBloque = proceQueTieneElBloque.directorio;
 
@@ -1133,25 +1153,63 @@ namespace Arquitectura_CPU
             return resultado;
         }
 
-        public void storeConditional(int posMem, int regFuente)
+        public int storeConditional(int posMem, int regFuente)
         {
-            
-        }  
-
-        public void loadLink(int regFuente2, int posMem)
-        {
+            if(posMem == 176)
+            {
+                var i = 0;
+            }
+            var res = -666;
             Contexto contPrincipal = contextos.ElementAt(0);
-            var direccion = getPosicion(posMem);
-            contPrincipal.loadLinkActivo = true;
-            contPrincipal.registro[32] = posMem; // Actualiza el valor de RL 
-            contPrincipal.bloque_linked = direccion.numeroBloque;
-            LoadWord(regFuente2, posMem);
+            if(contPrincipal.loadLinkActivo && contPrincipal.registro[32] == posMem)
+            {
+                res = StoreWord(posMem, regFuente);
+                if(res > 0)
+                {
+                    contPrincipal.registro[regFuente] = 1;
+                    for (var i = 0; i < procesadores.Count; i++)
+                    {
+                        var proc = procesadores.ElementAt(i);
+                        if(proc.id != id && proc.contextos.Count > 0 && proc.contextos.First().registro[32] == posMem)
+                        {
+                            contPrincipal.loadLinkActivo = false;
+                            contPrincipal.registro[32] = -1;
+                        }
+                    }
+                }     
+            }
+            else
+            {
+                contPrincipal.loadLinkActivo = false;
+                contPrincipal.registro[regFuente] = 0;
+            }
+            return res;
+        }
+
+        public int loadLink(int regFuente2, int posMem)
+        {
+            var res = LoadWord(regFuente2, posMem);
+            if (res > 0)
+            {
+                Contexto contPrincipal = contextos.ElementAt(0);
+                var direccion = getPosicion(posMem);
+
+                // Bandera de linked
+                contPrincipal.loadLinkActivo = true;
+
+                // Actualiza el valor de RL
+                contPrincipal.registro[32] = posMem;
+
+                // Guarda el numero de bloque
+                contPrincipal.bloque_linked = direccion.numeroBloque;
+            }
+            return res;
         }
 
 
         public void Iniciar()
         {
-            while (contextos.Count > 0)
+            while (contextos.Count > 0 && cicloActual < 215)
             {
                 // Need to sync here
                 
