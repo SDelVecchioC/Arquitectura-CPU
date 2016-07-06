@@ -539,14 +539,14 @@ namespace Arquitectura_CPU
         /// <param name="procesadorDirecCasa"></param>
         /// <param name="procAInvalidar"></param>
         /// <param name="direccion"></param>
-        private void invalidarCacheProcesador(Procesador procesadorDirecCasa, Procesador procAInvalidar, Direccion direccion)
+        private void invalidarCacheProcesador(Procesador procesadorDirecCasa, Procesador procAInvalidar, int numeroBloque)
         {
             /// Invalida caché
-            procAInvalidar.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-            procAInvalidar.blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = -1;
+            procAInvalidar.cacheDatos[numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
+            procAInvalidar.blockMapDatos[numeroBloque % CACHDAT_FILAS] = -1;
 
             /// Actualiza el directorio
-            procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][procAInvalidar.id + 1] = 0;
+            procesadorDirecCasa.directorio[numeroBloque % DIRECT_FILAS][procAInvalidar.id + 1] = 0;
         }
 
         /// <summary>
@@ -556,7 +556,7 @@ namespace Arquitectura_CPU
         /// <param name="procesadorDirecCasa"></param>
         /// <param name="direccion"></param>
         /// <returns>True si lo logró invalidar todo correctamente</returns>
-        private bool InvalidarCachesCompartidas(Procesador procesadorDirecCasa, Direccion direccion)
+        private bool InvalidarCachesCompartidas(Procesador procesadorDirecCasa, int numeroBloque)
         {
             bool exito = true;
             bool bloqueoCache = false;
@@ -565,7 +565,7 @@ namespace Arquitectura_CPU
             List<Procesador> procesadoresTienenComp = new List<Procesador>();
             for (int i = 0; i < 3; i++)
             {
-                if (i != id && procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][i + 1] == 1)
+                if (i != id && procesadorDirecCasa.directorio[numeroBloque % DIRECT_FILAS][i + 1] == 1)
                     procesadoresTienenComp.Add(procesadores.ElementAt(i));
             }
 
@@ -579,7 +579,7 @@ namespace Arquitectura_CPU
                     Monitor.TryEnter(proc.cacheDatos, ref bloqueoCache);
                     if (bloqueoCache)
                     {
-                        invalidarCacheProcesador(procesadorDirecCasa, proc, direccion);
+                        invalidarCacheProcesador(procesadorDirecCasa, proc, numeroBloque);
                     }
                     else
                     {
@@ -639,11 +639,8 @@ namespace Arquitectura_CPU
                     if (bloqueEnMiCache(direccion.numeroBloque))
                     {
                         #region hitMiCache
-                        /// En este caso de da un HIT
                         int estadoMiBloque = cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO];
                         /// Hay que revisar el estado del bloque
-                        /// Si está Modificado entonces modifiquelo de nuevo y ya
-                        /// Si está compartido hay que ir a invalidar a otros lados y luego modificar
                         switch (estadoMiBloque)
                         {
                             case ESTADO_MODIFICADO:
@@ -652,8 +649,7 @@ namespace Arquitectura_CPU
                                 exito = 1;
                                 break;
                             case ESTADO_COMPARTIDO:
-                                /// Busco el procesador que tiene el directorio casa del bloque
-                                /// lo intento bloquear
+                                /// Intento bloquear directorio casa
                                 int numProc = getNumeroProcesador(direccion.numeroBloque);
                                 Procesador procesadorDirecCasa = procesadores.ElementAt(numProc);
                                 Monitor.TryEnter(procesadorDirecCasa.directorio, ref bloqueoDirecCasa);
@@ -662,7 +658,7 @@ namespace Arquitectura_CPU
                                     /// Si lo logro bloquear, esa función intentará invalidar, si lo logra
                                     /// devuelve true y entonces puedo modificar el bloque
                                     objDirecCasa = procesadorDirecCasa.directorio;
-                                    bool res = InvalidarCachesCompartidas(procesadorDirecCasa, direccion);
+                                    bool res = InvalidarCachesCompartidas(procesadorDirecCasa, direccion.numeroBloque);
                                     if (res)
                                     {
                                         /// Actualizo directorio
@@ -707,26 +703,15 @@ namespace Arquitectura_CPU
                                 switch(estadoBloqueVictima)
                                 {
                                     case ESTADO_COMPARTIDO:
-                                        /// Actualizo directorio
-                                        procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
-
-                                        /// Reviso si tengo que ponerlo UNCACHED
-                                        bool compartidoEnOtrasCaches = false;
-                                        for (int i = 1; i < 4; i++)
+                                        bool res = InvalidarCachesCompartidas(procesadorBloqueVictima, numeroBloqueVictima);
+                                        if (res)
                                         {
-                                            if (procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][i + 1] == 1)
-                                            {
-                                                compartidoEnOtrasCaches = true;
-                                            }
+                                            procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED;
                                         }
-                                        if (!compartidoEnOtrasCaches)
+                                        else
                                         {
-                                            procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][0] = ESTADO_UNCACHED;
+                                            puedeContinuarDesdeBloqueVictima = false;
                                         }
-
-                                        /// Lo invalido en caché
-                                        cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-                                        blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
                                         break;
                                     case ESTADO_MODIFICADO:
                                         /// manda a guardar el bloque a memoria 
@@ -813,8 +798,10 @@ namespace Arquitectura_CPU
                                                 /// cargo a mi caché
                                                 cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = procesQueTieneModificado.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i];
                                             }
-                                            /// Cambio palabra, actualizo estado
+                                            /// Cambio palabra
                                             cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
+
+                                            /// Actualizo mi caché
                                             cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
                                             blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
 
@@ -833,12 +820,13 @@ namespace Arquitectura_CPU
                                         }                     
                                         break;
                                     case ESTADO_COMPARTIDO:
-                                        bool res = InvalidarCachesCompartidas(procesadorDirecCasa, direccion);
+                                        bool res = InvalidarCachesCompartidas(procesadorDirecCasa, direccion.numeroBloque);
                                         if (res)
                                         {
                                             /// Cambio palabra, actualizo estado
                                             cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra] = contPrincipal.registro[regFuente];
                                             cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_MODIFICADO;
+                                            blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
 
                                             /// Actualizo directorio
                                             procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_MODIFICADO;
@@ -963,26 +951,15 @@ namespace Arquitectura_CPU
                                 switch(estadoBloqueVictima)
                                 {
                                     case ESTADO_COMPARTIDO:
-                                        /// Actualiza el directorio
-                                        procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][id + 1] = 0;
-
-                                        /// Ve a ver si tiene que poner UNCACHED
-                                        bool compartidoEnOtrasCaches = false;
-                                        for (int i = 0; i < 3; i++)
-                                        {
-                                            if (procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][i + 1] == 1)
-                                            {
-                                                compartidoEnOtrasCaches = true;
-                                            }
-                                        }
-                                        if (!compartidoEnOtrasCaches)
+                                        bool res = InvalidarCachesCompartidas(procesadorBloqueVictima, numeroBloqueVictima);
+                                        if(res)
                                         {
                                             procesadorBloqueVictima.directorio[numeroBloqueVictima % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_UNCACHED;
                                         }
-
-                                        /// Invalida la caché
-                                        cacheDatos[numeroBloqueVictima % CACHDAT_FILAS][CACHDAT_COL_ESTADO] = ESTADO_INVALIDO;
-                                        blockMap[numeroBloqueVictima % CACHDAT_FILAS] = -1;
+                                        else
+                                        {
+                                            puedeContinuarDesdeBloqueVictima = false;
+                                        }
                                         break;
                                     case ESTADO_MODIFICADO:
                                         /// Guardo en memoria
@@ -1015,17 +992,17 @@ namespace Arquitectura_CPU
                         {
                             /// Significa que los locks del bloque victima se hicieron bien
                             int numProc = getNumeroProcesador(direccion.numeroBloque);
-                            Procesador proceQueTieneElBloque = procesadores.ElementAt(numProc);
+                            Procesador procesadorDirecCasa = procesadores.ElementAt(numProc);
 
-                            Monitor.TryEnter(proceQueTieneElBloque.directorio, ref bloqueoDirecBloque);
+                            Monitor.TryEnter(procesadorDirecCasa.directorio, ref bloqueoDirecBloque);
                             if (bloqueoDirecBloque)
                             {
                                 /// Se bloqueo el directorio casa del bloque
                                 #region bloqueoDirecBloque
-                                objDirecBloque = proceQueTieneElBloque.directorio;
+                                objDirecBloque = procesadorDirecCasa.directorio;
 
                                 /// Ciclos de retraso
-                                if (proceQueTieneElBloque == this)
+                                if (procesadorDirecCasa == this)
                                 {
                                     estoyEnRetraso = true;
                                     ciclosEnRetraso += 2; // ciclos que gasta en consulta directorio local
@@ -1037,39 +1014,39 @@ namespace Arquitectura_CPU
                                 }
 
                                 /// Veo el estado del bloque
-                                int estadoBloque = proceQueTieneElBloque.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO];
+                                int estadoBloque = procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO];
 
                                 /// Si alquien lo tiene modificado
                                 if (estadoBloque == ESTADO_MODIFICADO)
                                 {
                                     /// Busco el procesador
-                                    Procesador procQueLoTieneM = null;
+                                    Procesador procQueLoTieneModif = null;
                                     for (int i = 0; i < 3; i++)
                                     {
-                                        if (proceQueTieneElBloque.directorio[direccion.numeroBloque % DIRECT_FILAS][i + 1] == 1)
+                                        if (procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][i + 1] == 1)
                                         {
-                                            procQueLoTieneM = procesadores.ElementAt(i);
+                                            procQueLoTieneModif = procesadores.ElementAt(i);
                                         }
                                     }
 
-                                    Monitor.TryEnter(procQueLoTieneM.cacheDatos, ref bloqueoCacheBloque);
+                                    Monitor.TryEnter(procQueLoTieneModif.cacheDatos, ref bloqueoCacheBloque);
                                     if (bloqueoCacheBloque)
                                     {
                                         /// Logro bloquear la cache del procesador que tiene el bloque modificado
-                                        objCacheBloque = procQueLoTieneM.cacheDatos;
+                                        objCacheBloque = procQueLoTieneModif.cacheDatos;
 
                                         /// Guarda en memoria
                                         for (int i = 0; i < 4; i++)
                                         {
-                                            proceQueTieneElBloque.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0] = procQueLoTieneM.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i];
+                                            procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0] = procQueLoTieneModif.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i];
                                         }
 
                                         /// Actualiza estado de la caché
-                                        procQueLoTieneM.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
+                                        procQueLoTieneModif.cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
 
                                         /// Actualiza el directorio
-                                        proceQueTieneElBloque.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
-                                        proceQueTieneElBloque.directorio[direccion.numeroBloque % DIRECT_FILAS][procQueLoTieneM.id + 1] = 1;
+                                        procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
+                                        procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][procQueLoTieneModif.id + 1] = 1;
                                     }
                                 }
                                 /// Esta validación asegura que no hizo fail de try lock en el paso anterior
@@ -1078,7 +1055,7 @@ namespace Arquitectura_CPU
                                     /// Se trae el bloque de memoria a mi caché
                                     for (int i = 0; i < 4; i++)
                                     {
-                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = proceQueTieneElBloque.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
+                                        cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][i] = procesadorDirecCasa.memoriaPrincipal[direccion.numeroBloque % BLOQUES_COMP][i][0];
                                     }
 
                                     /// Actualizo mi caché
@@ -1086,8 +1063,8 @@ namespace Arquitectura_CPU
                                     blockMapDatos[direccion.numeroBloque % CACHDAT_FILAS] = direccion.numeroBloque;
 
                                     /// Actualizo directorio
-                                    proceQueTieneElBloque.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
-                                    proceQueTieneElBloque.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
+                                    procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][DIRECT_COL_ESTADO] = ESTADO_COMPARTIDO;
+                                    procesadorDirecCasa.directorio[direccion.numeroBloque % DIRECT_FILAS][id + 1] = 1;
 
                                     /// Guardo en el registro
                                     contPrincipal.registro[regFuente2] = cacheDatos[direccion.numeroBloque % CACHDAT_FILAS][direccion.numeroPalabra];
