@@ -60,6 +60,7 @@ C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Ar
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe.config
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.exe
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\Arquitectura-CPU.pdb
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.exe
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.pdb
 C:\Users\gollo 112\Desktop\cuarto año\primer semestre\Arqui\Arquitectura-CPU\Arquitectura-CPU\obj\Debug\Arquitectura-CPU.csprojResolveAssemblyReference.cache
@@ -71,7 +72,3 @@ C:\Users\b30640\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.
 C:\Users\b30640\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\4.txt
 C:\Users\b30640\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\5.txt
 C:\Users\b30640\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\6.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\4.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\5.txt
-C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\6.txt
