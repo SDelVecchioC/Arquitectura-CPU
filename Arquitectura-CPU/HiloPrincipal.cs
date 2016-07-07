@@ -100,7 +100,7 @@ namespace Arquitectura_CPU
             ImprimirMemoC(procesador3, console);
 
             console.WriteLine($"Puede consultar la salida de este programa en el archivo {console.Guardar()}");
-            console.WriteLine("Presione una tecla para salir");
+            console.WriteLine("Presione enter para salir");
             Console.ReadLine();
         }
 
@@ -114,7 +114,7 @@ namespace Arquitectura_CPU
                 for (var i = 0; i < contexto.Registro.Length; i++)
                 {
                     console.Write($"R{i.ToString("D2")}: {contexto.Registro[i].ToString("D5")} ");
-                    if (i % 4 == 3)
+                    if (i % 5 == 4)
                     {
                         console.WriteLine("");
                     }
@@ -126,12 +126,16 @@ namespace Arquitectura_CPU
         { 
             for (var i = 0; i < 8; i++)
             {
-                console.WriteLine($"Bloque #{i + (p.Id*8)}");
+                console.Write($"Bloque #{i + (p.Id*8)} ");
                 for (var j = 0; j < 4; j++)
                 {
                     console.Write($"{p.MemoriaPrincipal[i][j][0]} ");
                 }
-                console.WriteLine("");
+                if (i % 4 == 3)
+                {
+                    console.WriteLine("");
+                }
+               // console.WriteLine("");
             }
         }
 
