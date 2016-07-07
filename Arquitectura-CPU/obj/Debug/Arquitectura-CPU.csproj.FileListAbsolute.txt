@@ -70,3 +70,13 @@ C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\2.txt
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.txt
 C:\Users\sdelv\Documents\GitHub\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\0.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\sinLLSC\0.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\sinLLSC\1.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\sinLLSC\2.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\sinLLSC\3.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\sinLLSC\4.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\sinLLSC\5.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\sinLLSC\6.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\soloLW\A.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\soloLW\B.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\soloLW\C.txt

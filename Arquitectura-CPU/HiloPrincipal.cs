@@ -11,50 +11,68 @@ namespace Arquitectura_CPU
         public static List<List<T>> SplitList<T>(List<T> locations, int nSize)
         {
 
-            List<List<T>> res = new List<List<T>>();
-            for(int i = 0; i < nSize; i++)
+            var res = new List<List<T>>();
+            for(var i = 0; i < nSize; i++)
             {
                 var l = new List<T>();
                 res.Add(l);
             }
-            for(int i = 0; i < locations.Count; i++)
+            for(var i = 0; i < locations.Count; i++)
             {
                 res.ElementAt(i % nSize).Add(locations.ElementAt(i));
             }
             return res;
         }
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            int cantProcesadores = 3;
+            const int cantProcesadores = 3;
 
-            Consola console = new Consola();
+            var console = new Consola();
 
             var sync = new Barrier(participantCount: cantProcesadores);
-            List<string> programas = new List<string>();
-            
+
             // Recibe el valor de quantum del usuario
             Console.WriteLine("Por favor indicar el quantum a utilizar");
-            string unParsedQuantum = Console.ReadLine();
+            var unParsedQuantum = Console.ReadLine();
             int parsedQuantum;
-            while (!Int32.TryParse(unParsedQuantum, out parsedQuantum))
+            while (!int.TryParse(unParsedQuantum, out parsedQuantum))
             {
                 Console.WriteLine("El valor indicado no es numérico, por favor indicar el quantum a utilizar");
                 unParsedQuantum = Console.ReadLine();
-            } 
-                
-            // Lee los archivos y los reparte
-            foreach (string file in Directory.EnumerateFiles("./programas", "*.txt"))
-            {
-                string contents = File.ReadAllText(file);
-                programas.Add(contents);
             }
 
-            List<List<string>> programasPorCpu = SplitList(programas, cantProcesadores);
+            Console.WriteLine("Presione\n1: correr hilillos solo LW\n2: correr hilillos sin LL SC pocos ciclos");
+            var unParsedOption = Console.ReadLine();
+            int parsedOption;
+            while (!int.TryParse(unParsedOption, out parsedOption))
+            {
+                Console.WriteLine("El valor indicado no es numérico, por favor indicar el quantum a utilizar");
+                unParsedOption = Console.ReadLine();
+            }
 
-            Procesador procesador1 = new Procesador(0, sync, programasPorCpu.ElementAt(0), console, parsedQuantum);
-            Procesador procesador2 = new Procesador(1, sync, programasPorCpu.ElementAt(1), console, parsedQuantum);
-            Procesador procesador3 = new Procesador(2, sync, programasPorCpu.ElementAt(2), console, parsedQuantum);
+            List<string> programas = null;
+            switch (parsedOption)
+            {
+                case 1:
+                    programas = Directory.EnumerateFiles("./programas/soloLW", "*.txt").Select(File.ReadAllText).ToList();
+                    break;
+                case 2:
+                    programas = Directory.EnumerateFiles("./programas/sinLLSC", "*.txt").Select(File.ReadAllText).ToList();
+                    break;
+                case 3:
+                    programas = Directory.EnumerateFiles("./programas", "*.txt").Select(File.ReadAllText).ToList();
+                    break;
+            }
+
+            // Lee los archivos y los reparte
+            
+
+            var programasPorCpu = SplitList(programas, cantProcesadores);
+
+            var procesador1 = new Procesador(0, sync, programasPorCpu.ElementAt(0), console, parsedQuantum);
+            var procesador2 = new Procesador(1, sync, programasPorCpu.ElementAt(1), console, parsedQuantum);
+            var procesador3 = new Procesador(2, sync, programasPorCpu.ElementAt(2), console, parsedQuantum);
 
             procesador1.SetProcesadores(ref procesador1, ref procesador2, ref procesador3);
             procesador2.SetProcesadores(ref procesador1, ref procesador2, ref procesador3);
@@ -72,29 +90,30 @@ namespace Arquitectura_CPU
             hiloCpu2.Join();
             hiloCpu3.Join();
 
-           /* imprimirResultados(procesador1, console);
-            imprimirResultados(procesador2, console);
-            imprimirResultados(procesador3, console);
+            ImprimirResultados(procesador1, console);
+            ImprimirResultados(procesador2, console);
+            ImprimirResultados(procesador3, console);
 
             console.WriteLine("Memoria Compartida");
-            imprimirMemoC(procesador1, console);
-            imprimirMemoC(procesador2, console);
-            imprimirMemoC(procesador3, console);*/
+            ImprimirMemoC(procesador1, console);
+            ImprimirMemoC(procesador2, console);
+            ImprimirMemoC(procesador3, console);
 
-            console.WriteLine(String.Format("Puede consultar la salida de este programa en el archivo {0}", console.Guardar()));
+            console.WriteLine($"Puede consultar la salida de este programa en el archivo {console.Guardar()}");
             console.WriteLine("Presione una tecla para salir");
             Console.ReadLine();
         }
 
-        private static void imprimirResultados(Procesador p, Consola console)
+        private static void ImprimirResultados(Procesador p, Consola console)
         {
             foreach (var contexto in p.ContextosFinalizados)
             {
-                console.WriteLine(String.Format("Resultados del hilillo #{0} del procesador #{1}:", contexto.Id, contexto.IdProc));
-                console.WriteLine(String.Format("Ciclo Inicial: {0}. Ciclo Final: {1}. Total de ciclos: {2}", contexto.CicloInicial, contexto.CicloFinal, contexto.CicloFinal - contexto.CicloInicial));
-                for (int i = 0; i < contexto.Registro.Length; i++)
+                console.WriteLine($"Resultados del hilillo #{contexto.Id} del procesador #{contexto.IdProc}:");
+                console.WriteLine(
+                    $"Ciclo Inicial: {contexto.CicloInicial}. Ciclo Final: {contexto.CicloFinal}. Total de ciclos: {contexto.CicloFinal - contexto.CicloInicial}");
+                for (var i = 0; i < contexto.Registro.Length; i++)
                 {
-                    console.Write(String.Format("R{0}: {1} ", i.ToString("D2"), contexto.Registro[i].ToString("D5")));
+                    console.Write($"R{i.ToString("D2")}: {contexto.Registro[i].ToString("D5")} ");
                     if (i % 4 == 3)
                     {
                         console.WriteLine("");
@@ -103,14 +122,14 @@ namespace Arquitectura_CPU
                 console.WriteLine("");
             }
         }
-        private static void imprimirMemoC(Procesador p, Consola console)
+        private static void ImprimirMemoC(Procesador p, Consola console)
         { 
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
-                console.WriteLine(String.Format("Bloque #{0}", i+(p.Id*8)));
-                for (int j = 0; j < 4; j++)
+                console.WriteLine($"Bloque #{i + (p.Id*8)}");
+                for (var j = 0; j < 4; j++)
                 {
-                    console.Write(String.Format("{0} ", p.MemoriaPrincipal[i][j][0]));
+                    console.Write($"{p.MemoriaPrincipal[i][j][0]} ");
                 }
                 console.WriteLine("");
             }
