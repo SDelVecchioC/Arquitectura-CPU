@@ -71,3 +71,6 @@ C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\2.txt
 C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\3.txt
 C:\Users\sdelv\Documents\GitHub\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\0.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\4.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\5.txt
+C:\Users\Emmanuel\Desktop\Arquitectura-CPU\Arquitectura-CPU\bin\Debug\programas\6.txt

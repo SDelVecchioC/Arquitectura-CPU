@@ -1220,7 +1220,7 @@ namespace Arquitectura_CPU
 
         public void Iniciar()
         {
-            while (Contextos.Count > 0 && CicloActual < 215)
+            while (Contextos.Count > 0)// && CicloActual < 305)
             {
                 // Need to sync here
                 
