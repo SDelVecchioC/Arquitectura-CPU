@@ -126,12 +126,12 @@ namespace Arquitectura_CPU
         { 
             for (var i = 0; i < 8; i++)
             {
-                console.Write($"Bloque #{i + (p.Id*8)} ");
+                console.Write($"Bloque #{(i + (p.Id*8)).ToString("D2")} ");
                 for (var j = 0; j < 4; j++)
                 {
-                    console.Write($"{p.MemoriaPrincipal[i][j][0]} ");
+                    console.Write($"{p.MemoriaPrincipal[i][j][0].ToString("D2")} ");
                 }
-                if (i % 4 == 3)
+                if (i % 2 == 1)
                 {
                     console.WriteLine("");
                 }
