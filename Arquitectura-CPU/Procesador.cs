@@ -477,7 +477,7 @@ namespace Arquitectura_CPU
                      * */
                     output = String.Format("[{0}] ciclo: {1}, [{2}]: {3}", id, cicloActual, contextos.ElementAt(0).id, getStringInstruccion(cacheInstrucciones[posicion.numeroBloque % 4][posicion.numeroPalabra]));
                     posMem = contPrincipal.registro[regFuente1] + regDest;
-                    var sc = storeConditional(posMem, regFuente2);
+                    var sc = StoreWord(posMem, regFuente2, true);
                     output += " Pos: " + posMem + " Res: " + sc.ToString();
                     break;
                 case 35:
@@ -620,7 +620,7 @@ namespace Arquitectura_CPU
         /// <param name="posMem"></param>
         /// <param name="regFuente"></param>
         /// <returns></returns>
-        public int StoreWord(int posMem, int regFuente)
+        public int StoreWord(int posMem, int regFuente, bool conditional = false)
         {
             // resultado final, sirve para
             // 1. bajar el PC
@@ -645,12 +645,40 @@ namespace Arquitectura_CPU
             bool puedeContinuarDesdeBloqueVictima = true;
 
             Contexto contPrincipal = contextos.ElementAt(0);
+
+            // Esto es de SC
+            /// Si LL esta mal
+            if (conditional && (contPrincipal.registro[32] != posMem || contPrincipal.loadLinkActivo == false))
+            {
+                contPrincipal.registro[regFuente] = 0;
+                contPrincipal.loadLinkActivo = false;
+                return -1;
+            }
             try
             {
                 // Intento bloquear mi caché
                 Monitor.TryEnter(cacheDatos, ref bloqueoMiCache);
                 if(bloqueoMiCache)
                 {
+                    // Esto es de SC
+                    /// Invalido todos los otros LL
+                    if (conditional)
+                    {
+                        foreach (var p in procesadores)
+                        {
+                            // para cada contexto en todos los procesadores que no sean el mio?????
+                            foreach (var c in p.contextos)
+                            {
+                                if (p.id != this.id && c.loadLinkActivo)
+                                {
+                                    if (c.bloque_linked == contPrincipal.bloque_linked)
+                                    {
+                                        c.registro[32] = -1;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     #region bloqueoMiCache
                     objMiCache = cacheDatos;
                     var direccion = getPosicion(posMem);
@@ -893,6 +921,9 @@ namespace Arquitectura_CPU
                 else
                 {
                     exito = -1;
+                    // SC:
+                    if (conditional)
+                        contPrincipal.registro[regFuente] = 1;
                 }
             }
             finally
@@ -1141,39 +1172,6 @@ namespace Arquitectura_CPU
                     contPrincipal.pc -= 4;
             }
             return resultado;
-        }
-
-        public int storeConditional(int posMem, int regFuente)
-        {
-            if(posMem == 176)
-            {
-                var i = 0;
-            }
-            var res = -666;
-            Contexto contPrincipal = contextos.ElementAt(0);
-            if(contPrincipal.loadLinkActivo && contPrincipal.registro[32] == posMem)
-            {
-                res = StoreWord(posMem, regFuente);
-                if(res > 0)
-                {
-                    contPrincipal.registro[regFuente] = 1;
-                    for (var i = 0; i < procesadores.Count; i++)
-                    {
-                        var proc = procesadores.ElementAt(i);
-                        if(proc.id != id && proc.contextos.Count > 0 && proc.contextos.First().registro[32] == posMem)
-                        {
-                            contPrincipal.loadLinkActivo = false;
-                            contPrincipal.registro[32] = -1;
-                        }
-                    }
-                }     
-            }
-            else
-            {
-                contPrincipal.loadLinkActivo = false;
-                contPrincipal.registro[regFuente] = 0;
-            }
-            return res;
         }
 
         public int loadLink(int regFuente2, int posMem)
