@@ -90,11 +90,11 @@ namespace Arquitectura_CPU
         {
             foreach (var contexto in p.ContextosFinalizados)
             {
-                console.WriteLine(String.Format("Resultados del hilillo #{0} del procesador #{1}:", contexto.id, contexto.idProc));
-                console.WriteLine(String.Format("Ciclo Inicial: {0}. Ciclo Final: {1}. Total de ciclos: {2}", contexto.cicloInicial, contexto.cicloFinal, contexto.cicloFinal - contexto.cicloInicial));
-                for (int i = 0; i < contexto.registro.Length; i++)
+                console.WriteLine(String.Format("Resultados del hilillo #{0} del procesador #{1}:", contexto.Id, contexto.IdProc));
+                console.WriteLine(String.Format("Ciclo Inicial: {0}. Ciclo Final: {1}. Total de ciclos: {2}", contexto.CicloInicial, contexto.CicloFinal, contexto.CicloFinal - contexto.CicloInicial));
+                for (int i = 0; i < contexto.Registro.Length; i++)
                 {
-                    console.Write(String.Format("R{0}: {1} ", i.ToString("D2"), contexto.registro[i].ToString("D5")));
+                    console.Write(String.Format("R{0}: {1} ", i.ToString("D2"), contexto.Registro[i].ToString("D5")));
                     if (i % 4 == 3)
                     {
                         console.WriteLine("");
