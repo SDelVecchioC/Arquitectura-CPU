@@ -1246,7 +1246,7 @@ namespace Arquitectura_CPU
 
         public void Iniciar()
         {
-            while (Contextos.Count > 0 && CicloActual < 200)
+            while (Contextos.Count > 0)
             {
                 Sync.SignalAndWait();
                 
