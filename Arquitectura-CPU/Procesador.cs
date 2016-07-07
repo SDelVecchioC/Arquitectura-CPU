@@ -917,13 +917,17 @@ namespace Arquitectura_CPU
                         #endregion
                     }
                     #endregion
+
+                    // SC:
+                    if (conditional)
+                    {
+                        contPrincipal.registro[regFuente] = 1;
+                        contPrincipal.loadLinkActivo = false;
+                    }
                 }
                 else
                 {
                     exito = -1;
-                    // SC:
-                    if (conditional)
-                        contPrincipal.registro[regFuente] = 1;
                 }
             }
             finally
