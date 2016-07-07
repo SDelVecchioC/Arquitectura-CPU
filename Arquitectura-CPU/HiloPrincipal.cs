@@ -135,7 +135,6 @@ namespace Arquitectura_CPU
                 {
                     console.WriteLine("");
                 }
-               // console.WriteLine("");
             }
         }
 
