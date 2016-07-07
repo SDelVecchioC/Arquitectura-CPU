@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Arquitectura_CPU
 {
@@ -58,9 +56,9 @@ namespace Arquitectura_CPU
             Procesador procesador2 = new Procesador(1, sync, programasPorCpu.ElementAt(1), console, parsedQuantum);
             Procesador procesador3 = new Procesador(2, sync, programasPorCpu.ElementAt(2), console, parsedQuantum);
 
-            procesador1.setProcesadores(ref procesador1, ref procesador2, ref procesador3);
-            procesador2.setProcesadores(ref procesador1, ref procesador2, ref procesador3);
-            procesador3.setProcesadores(ref procesador1, ref procesador2, ref procesador3);
+            procesador1.SetProcesadores(ref procesador1, ref procesador2, ref procesador3);
+            procesador2.SetProcesadores(ref procesador1, ref procesador2, ref procesador3);
+            procesador3.SetProcesadores(ref procesador1, ref procesador2, ref procesador3);
 
             var hiloCpu1 = new Thread(procesador1.Iniciar);
             var hiloCpu2 = new Thread(procesador2.Iniciar);
@@ -90,7 +88,7 @@ namespace Arquitectura_CPU
 
         private static void imprimirResultados(Procesador p, Consola console)
         {
-            foreach (var contexto in p.contextosFinalizados)
+            foreach (var contexto in p.ContextosFinalizados)
             {
                 console.WriteLine(String.Format("Resultados del hilillo #{0} del procesador #{1}:", contexto.id, contexto.idProc));
                 console.WriteLine(String.Format("Ciclo Inicial: {0}. Ciclo Final: {1}. Total de ciclos: {2}", contexto.cicloInicial, contexto.cicloFinal, contexto.cicloFinal - contexto.cicloInicial));
@@ -109,10 +107,10 @@ namespace Arquitectura_CPU
         { 
             for (int i = 0; i < 8; i++)
             {
-                console.WriteLine(String.Format("Bloque #{0}", i+(p.id*8)));
+                console.WriteLine(String.Format("Bloque #{0}", i+(p.Id*8)));
                 for (int j = 0; j < 4; j++)
                 {
-                    console.Write(String.Format("{0} ", p.memoriaPrincipal[i][j][0]));
+                    console.Write(String.Format("{0} ", p.MemoriaPrincipal[i][j][0]));
                 }
                 console.WriteLine("");
             }
